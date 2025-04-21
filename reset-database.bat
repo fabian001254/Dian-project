@@ -1,0 +1,13 @@
+@echo off
+echo Reiniciando la base de datos del sistema DIAN Facturacion Electronica...
+cd /d %~dp0
+
+echo Eliminando base de datos actual...
+if exist database.sqlite del database.sqlite
+
+echo Iniciando servidor para recrear la base de datos...
+echo El servidor se reiniciara automaticamente.
+echo Por favor espere...
+
+cmd /c npm run dev
+pause

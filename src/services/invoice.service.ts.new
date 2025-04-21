@@ -1,0 +1,417 @@
+// @ts-nocheck
+import { AppDataSource } from '../config/database';
+import * as fs from 'fs';
+import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { Invoice, InvoiceStatus } from '../models/Invoice';
+import { InvoiceItem } from '../models/InvoiceItem';
+import { Customer } from '../models/Customer';
+import { Company } from '../models/Company';
+import { Product } from '../models/Product';
+import { Certificate } from '../models/Certificate';
+import { DianSimulator } from '../simulators/dian.simulator';
+import { CertificateSimulator } from '../simulators/certificate.simulator';
+import { EmailSimulator } from '../simulators/email.simulator';
+import { generateInvoiceXML } from '../utils/xml.generator';
+import { generateInvoicePDF } from '../utils/pdf.generator';
+
+/**
+ * Servicio para la gestión de facturas electrónicas
+ */
+export class InvoiceService {
+  private dianSimulator: DianSimulator;
+  private certificateSimulator: CertificateSimulator;
+  private emailSimulator: EmailSimulator;
+
+  constructor() {
+    this.dianSimulator = DianSimulator.getInstance();
+    this.certificateSimulator = CertificateSimulator.getInstance();
+    this.emailSimulator = EmailSimulator.getInstance();
+  }
+
+  /**
+   * Crea una nueva factura
+   * @param invoiceData Datos de la factura
+   * @param items Items de la factura
+   */
+  public async createInvoice(invoiceData: Partial<Invoice>, items: Partial<InvoiceItem>[]): Promise<Invoice> {
+    const connection = AppDataSource;
+    const queryRunner = connection.createQueryRunner();
+    
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    
+    try {
+      // Obtener datos necesarios
+      if (!invoiceData.companyId || !invoiceData.customerId) throw new Error('Faltan datos de empresa o cliente');
+      const company = await connection.manager.findOne(Company, { where: { id: invoiceData.companyId } });
+      const customer = await connection.manager.findOne(Customer, { where: { id: invoiceData.customerId } });
+      
+      if (!company || !customer) {
+        throw new Error('Empresa o cliente no encontrado');
+      }
+      
+      // Generar número de factura
+      const nextInvoiceNumber = await this.getNextInvoiceNumber(company.id);
+      
+      // Crear la factura
+      const invoice = new Invoice();
+      Object.assign(invoice, {
+        ...invoiceData,
+        number: nextInvoiceNumber.toString().padStart(8, '0'),
+        prefix: company.authorizationPrefix || 'FE',
+        status: InvoiceStatus.DRAFT,
+        issueDate: invoiceData.issueDate || new Date(),
+        dueDate: invoiceData.dueDate || this.calculateDueDate(new Date(), 30) // 30 días por defecto
+      });
+      
+      // Calcular totales
+      let subtotal = 0;
+      let taxTotal = 0;
+      
+      // Guardar la factura
+      const savedInvoice = await queryRunner.manager.save(invoice);
+      
+      // Procesar items
+      for (const itemData of items) {
+        const product = await connection.manager.findOne(Product, { where: { id: itemData.productId } });
+        
+        if (!product) {
+          throw new Error(`Producto no encontrado: ${itemData.productId}`);
+        }
+        
+        // Calcular valores del item
+        const quantity = Number(itemData.quantity);
+        const unitPrice = Number(itemData.unitPrice || product.unitPrice);
+        const itemSubtotal = quantity * unitPrice;
+        const discountRate = Number(itemData.discountRate || 0);
+        const discountAmount = (itemSubtotal * discountRate) / 100;
+        const taxRate = Number(itemData.taxRate || 19); // 19% IVA por defecto
+        const taxAmount = ((itemSubtotal - discountAmount) * taxRate) / 100;
+        const total = itemSubtotal - discountAmount + taxAmount;
+        
+        // Crear el item
+        const invoiceItem = new InvoiceItem();
+        Object.assign(invoiceItem, {
+          ...itemData,
+          invoiceId: savedInvoice.id,
+          quantity,
+          unitPrice,
+          subtotal: itemSubtotal,
+          discountRate,
+          discountAmount,
+          taxRate,
+          taxAmount,
+          total,
+          description: itemData.description || product.description
+        });
+        
+        // Guardar el item
+        await queryRunner.manager.save(invoiceItem);
+        
+        // Actualizar totales
+        subtotal += itemSubtotal;
+        taxTotal += taxAmount;
+      }
+      
+      // Actualizar totales en la factura
+      savedInvoice.subtotal = subtotal;
+      savedInvoice.taxTotal = taxTotal;
+      savedInvoice.total = subtotal + taxTotal;
+      
+      // Guardar la factura actualizada
+      await queryRunner.manager.save(savedInvoice);
+      
+      // Confirmar la transacción
+      await queryRunner.commitTransaction();
+      
+      return savedInvoice;
+    } catch (error) {
+      // Revertir la transacción en caso de error
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // Liberar el queryRunner
+      await queryRunner.release();
+    }
+  }
+
+  /**
+   * Envía una factura a la DIAN (simulado)
+   * @param invoiceId ID de la factura
+   */
+  public async sendInvoiceToDian(invoiceId: string): Promise<Invoice> {
+    try {
+      // Obtener la factura
+      const invoice = await this.getInvoiceWithRelations(invoiceId);
+      
+      if (!invoice) {
+        throw new Error('Factura no encontrada');
+      }
+      
+      if (invoice.status !== InvoiceStatus.DRAFT && invoice.status !== InvoiceStatus.REJECTED) {
+        throw new Error(`No se puede enviar una factura con estado ${invoice.status}`);
+      }
+      
+      // Obtener el certificado digital
+      const certificate = await this.getCompanyCertificate(invoice.companyId);
+      
+      if (!certificate) {
+        throw new Error('No se encontró un certificado digital válido');
+      }
+      
+      // Generar XML
+      const xmlContent = await this.generateAndSaveXML(invoice);
+      
+      // Firmar XML
+      const signedXml = this.certificateSimulator.signXML(xmlContent, certificate.privateKey);
+      
+      // Guardar XML firmado
+      const xmlPath = this.saveSignedXML(invoice, signedXml);
+      invoice.xmlPath = xmlPath;
+      
+      // Actualizar estado de la factura
+      invoice.status = InvoiceStatus.PENDING;
+      invoice.sentToDianAt = new Date();
+      
+      // Guardar la factura actualizada
+      await AppDataSource.manager.save(invoice);
+      
+      // Enviar a la DIAN (simulado)
+      console.log(' Enviando factura a la DIAN (simulado)...');
+      const dianResponse = await this.dianSimulator.sendInvoice(signedXml, certificate);
+      
+      // Actualizar la factura con la respuesta de la DIAN
+      invoice.dianResponseAt = new Date();
+      invoice.dianResponse = JSON.stringify(dianResponse);
+      
+      if (dianResponse.success) {
+        // Factura aprobada
+        invoice.status = InvoiceStatus.APPROVED;
+        invoice.cufe = dianResponse.cufe;
+        
+        // Generar QR
+        invoice.qrCode = this.generateQRCode(invoice);
+        
+        // Generar PDF
+        const pdfPath = await this.generateAndSavePDF(invoice);
+        invoice.pdfPath = pdfPath;
+        
+        // Enviar por correo al cliente
+        if (invoice.customer && invoice.customer.email) {
+          await this.sendInvoiceByEmail(invoice);
+        }
+      } else {
+        // Factura rechazada
+        invoice.status = InvoiceStatus.REJECTED;
+      }
+      
+      // Guardar la factura actualizada
+      await AppDataSource.manager.save(invoice);
+      
+      return invoice;
+    } catch (error) {
+      console.error('Error al enviar factura a la DIAN:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Envía una factura por correo electrónico (simulado)
+   * @param invoice Factura a enviar
+   */
+  public async sendInvoiceByEmail(invoice: Invoice): Promise<void> {
+    try {
+      if (!invoice.customer || !invoice.customer.email) {
+        throw new Error('El cliente no tiene un correo electrónico válido');
+      }
+      
+      if (!invoice.pdfPath || !invoice.xmlPath) {
+        throw new Error('La factura no tiene archivos PDF o XML generados');
+      }
+      
+      // Enviar correo (simulado)
+      this.emailSimulator.sendInvoiceEmail(
+        invoice.customer.email,
+        `${invoice.prefix}${invoice.number}`,
+        invoice.customer.name,
+        invoice.pdfPath,
+        invoice.xmlPath
+      );
+      
+      // Actualizar la factura
+      invoice.sentToCustomerAt = new Date();
+      await AppDataSource.manager.save(invoice);
+      
+      console.log(` Factura ${invoice.prefix}${invoice.number} enviada por correo a ${invoice.customer.email} (simulado)`);
+    } catch (error) {
+      console.error('Error al enviar factura por correo:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene una factura por su ID con todas sus relaciones
+   * @param invoiceId ID de la factura
+   */
+  public async getInvoiceWithRelations(invoiceId: string): Promise<Invoice | undefined> {
+    return AppDataSource
+      .getRepository(Invoice)
+      .createQueryBuilder('invoice')
+      .leftJoinAndSelect('invoice.company', 'company')
+      .leftJoinAndSelect('invoice.customer', 'customer')
+      .leftJoinAndSelect('invoice.items', 'items')
+      .leftJoinAndSelect('items.product', 'product')
+      .where('invoice.id = :invoiceId', { invoiceId })
+      .getOne();
+  }
+
+  /**
+   * Obtiene todas las facturas de una empresa
+   * @param companyId ID de la empresa
+   * @param status Estado de las facturas (opcional)
+   */
+  public async getCompanyInvoices(companyId: string, status?: InvoiceStatus): Promise<Invoice[]> {
+    const queryBuilder = AppDataSource
+      .getRepository(Invoice)
+      .createQueryBuilder('invoice')
+      .leftJoinAndSelect('invoice.customer', 'customer')
+      .where('invoice.companyId = :companyId', { companyId })
+      .orderBy('invoice.issueDate', 'DESC');
+    
+    if (status) {
+      queryBuilder.andWhere('invoice.status = :status', { status });
+    }
+    
+    return queryBuilder.getMany();
+  }
+
+  /**
+   * Genera y guarda el XML de una factura
+   * @param invoice Factura
+   */
+  private async generateAndSaveXML(invoice: Invoice): Promise<string> {
+    // Generar el contenido XML
+    const xmlContent = await generateInvoiceXML(invoice);
+    
+    // Crear directorio si no existe
+    const dir = path.join(__dirname, '../../storage/invoices/xml');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Guardar el archivo
+    const filename = `${invoice.prefix}${invoice.number}_${uuidv4()}.xml`;
+    const filePath = path.join(dir, filename);
+    fs.writeFileSync(filePath, xmlContent);
+    
+    return filePath;
+  }
+
+  /**
+   * Guarda el XML firmado de una factura
+   * @param invoice Factura
+   * @param signedXml XML firmado
+   */
+  private saveSignedXML(invoice: Invoice, signedXml: string): string {
+    // Crear directorio si no existe
+    const dir = path.join(__dirname, '../../storage/invoices/xml');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Guardar el archivo
+    const filename = `${invoice.prefix}${invoice.number}_signed_${uuidv4()}.xml`;
+    const filePath = path.join(dir, filename);
+    fs.writeFileSync(filePath, signedXml);
+    
+    return filePath;
+  }
+
+  /**
+   * Genera y guarda el PDF de una factura
+   * @param invoice Factura
+   */
+  private async generateAndSavePDF(invoice: Invoice): Promise<string> {
+    // Generar el contenido PDF
+    const pdfBuffer = await generateInvoicePDF(invoice);
+    
+    // Crear directorio si no existe
+    const dir = path.join(__dirname, '../../storage/invoices/pdf');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Guardar el archivo
+    const filename = `${invoice.prefix}${invoice.number}_${uuidv4()}.pdf`;
+    const filePath = path.join(dir, filename);
+    fs.writeFileSync(filePath, pdfBuffer);
+    
+    return filePath;
+  }
+
+  /**
+   * Genera un código QR para una factura
+   * @param invoice Factura
+   */
+  private generateQRCode(invoice: Invoice): string {
+    // En un sistema real, se generaría un código QR con la información requerida por la DIAN
+    // Para este simulador, simplemente devolvemos una URL simulada
+    return `https://catalogo-vpfe.dian.gov.co/document/searchqr?documentkey=${invoice.cufe}`;
+  }
+
+  /**
+   * Obtiene el certificado digital de una empresa
+   * @param companyId ID de la empresa
+   */
+  private async getCompanyCertificate(companyId: string): Promise<Certificate | undefined> {
+    const certificate = await AppDataSource
+      .getRepository(Certificate)
+      .createQueryBuilder('certificate')
+      .where('certificate.companyId = :companyId', { companyId })
+      .andWhere('certificate.status = :status', { status: 'active' })
+      .andWhere('certificate.expiryDate > :now', { now: new Date() })
+      .orderBy('certificate.isDefault', 'DESC')
+      .getOne();
+    return certificate ?? undefined;
+  }
+
+  /**
+   * Obtiene el siguiente número de factura para una empresa
+   * @param companyId ID de la empresa
+   */
+  private async getNextInvoiceNumber(companyId: string): Promise<number> {
+    const company = await AppDataSource.manager.findOne(Company, { where: { id: companyId } });
+    
+    if (!company) {
+      throw new Error('Empresa no encontrada');
+    }
+    
+    // Obtener la última factura
+    const lastInvoice = await AppDataSource
+      .getRepository(Invoice)
+      .createQueryBuilder('invoice')
+      .where('invoice.companyId = :companyId', { companyId })
+      .orderBy('CAST(invoice.number AS INTEGER)', 'DESC')
+      .getOne();
+    
+    if (!lastInvoice) {
+      // Si no hay facturas, comenzar desde el rango inicial autorizado
+      return company.authorizationRangeFrom || 1;
+    }
+    
+    // Incrementar el número de la última factura
+    return parseInt(lastInvoice.number) + 1;
+  }
+
+  /**
+   * Calcula la fecha de vencimiento a partir de una fecha y un número de días
+   * @param date Fecha base
+   * @param days Número de días
+   */
+  private calculateDueDate(date: Date, days: number): Date {
+    const dueDate = new Date(date);
+    dueDate.setDate(dueDate.getDate() + days);
+    return dueDate;
+  }
+}

@@ -1,0 +1,244 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Factura Electrónica FE00000001</title>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          margin: 0;
+          padding: 20px;
+          color: #333;
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .header {
+          background-color: #3066BE;
+          color: white;
+          padding: 20px;
+          display: flex;
+          justify-content: space-between;
+        }
+        .logo {
+          width: 150px;
+          height: 60px;
+          background-color: #f5f5f5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+        }
+        .invoice-info {
+          padding: 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .parties {
+          display: flex;
+          padding: 20px;
+          border-bottom: 1px solid #eee;
+        }
+        .party {
+          flex: 1;
+          padding-right: 20px;
+        }
+        h2 {
+          color: #3066BE;
+          margin-top: 0;
+        }
+        h3 {
+          color: #119DA4;
+          margin-top: 0;
+          font-size: 16px;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px 0;
+        }
+        th {
+          background-color: #f5f5f5;
+          padding: 10px;
+          text-align: left;
+          font-size: 12px;
+        }
+        td {
+          padding: 10px;
+          border-bottom: 1px solid #eee;
+          font-size: 12px;
+        }
+        .totals {
+          padding: 20px;
+          display: flex;
+          justify-content: flex-end;
+        }
+        .totals-table {
+          width: 300px;
+        }
+        .totals-table td {
+          padding: 5px;
+        }
+        .totals-table .total {
+          font-weight: bold;
+          font-size: 16px;
+        }
+        .footer {
+          padding: 20px;
+          text-align: center;
+          font-size: 12px;
+          color: #666;
+          background-color: #f9f9f9;
+        }
+        .qr-code {
+          width: 100px;
+          height: 100px;
+          background-color: #f5f5f5;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 5px;
+        }
+        .cufe {
+          margin-top: 10px;
+          font-size: 10px;
+          word-break: break-all;
+        }
+        .notes {
+          padding: 20px;
+          border-top: 1px solid #eee;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <div>
+            <h1>FACTURA ELECTRÓNICA DE VENTA</h1>
+            <p>FE 00000001</p>
+          </div>
+          <div class="logo">
+            Empresa Ejemplo S.A.S
+          </div>
+        </div>
+        
+        <div class="invoice-info">
+          <h3>INFORMACIÓN DE LA FACTURA</h3>
+          <table>
+            <tr>
+              <td><strong>Fecha de emisión:</strong> 19/04/2025</td>
+              <td><strong>Fecha de vencimiento:</strong> 19/05/2025</td>
+            </tr>
+            <tr>
+              <td><strong>Forma de pago:</strong> Efectivo</td>
+              <td><strong>Referencia:</strong> -</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="parties">
+          <div class="party">
+            <h3>DATOS DEL EMISOR</h3>
+            <p><strong>Empresa Ejemplo S.A.S</strong></p>
+            <p>NIT: 900123456-7</p>
+            <p>Calle 123 # 45-67</p>
+            <p>Bogotá, Cundinamarca</p>
+            <p>Tel: 6011234567</p>
+            <p>Email: contacto@empresaejemplo.com</p>
+          </div>
+          
+          <div class="party">
+            <h3>DATOS DEL ADQUIRENTE</h3>
+            <p><strong>julian prado</strong></p>
+            <p>NIT: 12122</p>
+            <p>Carrera 15 # 30-45</p>
+            <p>Bogotá, Cundinamarca</p>
+            <p>Tel: 3101234567</p>
+            <p>Email: juan.perez@mail.com</p>
+          </div>
+        </div>
+        
+        <div style="padding: 0 20px;">
+          <h3>DETALLE DE PRODUCTOS</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Cant.</th>
+                <th>Unidad</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+                <th>IVA</th>
+                <th>Valor IVA</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+      <tr>
+        <td>1</td>
+        <td>907317</td>
+        <td>ajijiji</td>
+        <td></td>
+        <td>1</td>
+        <td>Unidad</td>
+        <td>$14.000</td>
+        <td>$14.000</td>
+        <td>5%</td>
+        <td>$700</td>
+        <td>$14.700</td>
+      </tr>
+    
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="totals">
+          <table class="totals-table">
+            <tr>
+              <td>Subtotal:</td>
+              <td align="right">$14.000</td>
+            </tr>
+            <tr>
+              <td>IVA:</td>
+              <td align="right">$700</td>
+            </tr>
+            <tr class="total">
+              <td>Total:</td>
+              <td align="right">$14.700</td>
+            </tr>
+          </table>
+        </div>
+        
+        <div class="notes">
+          <h3>NOTAS</h3>
+          <p>Sin notas adicionales.</p>
+        </div>
+        
+        <div style="padding: 20px; text-align: center;">
+          <div class="qr-code">
+            Código QR
+          </div>
+          <div class="cufe">
+            <strong>CUFE:</strong> Pendiente de generación
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p>Factura generada electrónicamente según Resolución 001092 del 1 de julio de 2022 de la DIAN</p>
+          <p>Esta factura se asimila en todos sus efectos a una factura de venta (Artículo 3, Decreto 2242 de 2015)</p>
+          <p><strong>ESTE ES UN DOCUMENTO DE SIMULACIÓN CON FINES EDUCATIVOS</strong></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  

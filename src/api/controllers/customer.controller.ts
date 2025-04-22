@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../../config/database';
 import { Customer } from '../../models/Customer';
+import bcrypt from 'bcryptjs';
 
 export class CustomerController {
   /**
@@ -62,20 +63,23 @@ export class CustomerController {
     try {
       const {
         name,
+        businessName,
         documentType,
         documentNumber,
+        dv,
         address,
         phone,
         email,
         city,
-        department
+        department,
+        password
       } = req.body;
       
       // Validar datos
-      if (!name || !documentType || !documentNumber) {
+      if (!name || !documentType || !documentNumber || !password) {
         return res.status(400).json({
           success: false,
-          message: 'El nombre, tipo de documento y número de documento son obligatorios'
+          message: 'El nombre, tipo de documento, número de documento y contraseña son obligatorios'
         });
       }
 
@@ -96,6 +100,8 @@ export class CustomerController {
       // Crear el cliente
       const customer = new Customer();
       customer.name = name;
+      customer.businessName = businessName;
+      customer.dv = dv;
       customer.identificationType = documentType;
       customer.identificationNumber = documentNumber;
       customer.address = address;
@@ -103,6 +109,7 @@ export class CustomerController {
       customer.email = email;
       customer.city = city;
       customer.department = department;
+      customer.password = await bcrypt.hash(password, 10);
 
       await customerRepository.save(customer);
 

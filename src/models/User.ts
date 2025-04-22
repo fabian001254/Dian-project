@@ -1,6 +1,7 @@
 import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { Company } from './Company';
+import { IdentificationType } from './Customer';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -35,6 +36,17 @@ export class User extends BaseEntity {
 
   @Column({ nullable: true })
   lastLogin: Date;
+
+  // Información de identificación del usuario (aplica a vendors)
+  @Column({
+    type: 'simple-enum',
+    enum: IdentificationType,
+    default: IdentificationType.CC
+  })
+  identificationType: IdentificationType;
+
+  @Column({ length: 20, nullable: true })
+  identificationNumber: string;
 
   @ManyToOne(() => Company, company => company.users)
   @JoinColumn({ name: 'companyId' })

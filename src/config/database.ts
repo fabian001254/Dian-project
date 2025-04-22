@@ -7,6 +7,7 @@ import { Invoice } from '../models/Invoice';
 import { InvoiceItem } from '../models/InvoiceItem';
 import { TaxRate } from '../models/TaxRate';
 import { Certificate } from '../models/Certificate';
+import { Vendor } from '../models/Vendor';
 
 // Importar DataSource usando require para evitar problemas con TypeScript
 const { DataSource } = require('typeorm');
@@ -23,7 +24,8 @@ export const dbConfig = {
     Invoice,
     InvoiceItem,
     TaxRate,
-    Certificate
+    Certificate,
+    Vendor
   ],
   synchronize: true, // ADVERTENCIA: Esto puede causar pérdida de datos en producción // Set to false in production
   logging: process.env.NODE_ENV === 'development',
@@ -41,7 +43,8 @@ export const AppDataSource = new DataSource({
     Invoice,
     InvoiceItem,
     TaxRate,
-    Certificate
+    Certificate,
+    Vendor
   ],
   synchronize: true, // ADVERTENCIA: Esto puede causar pérdida de datos en producción
   logging: false
@@ -56,5 +59,6 @@ export const entities = [
   Invoice,
   InvoiceItem,
   TaxRate,
-  Certificate
+  Certificate,
+  Vendor
 ];

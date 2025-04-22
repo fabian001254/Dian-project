@@ -5,6 +5,7 @@ import { AppDataSource } from '../../config/database';
 import { InvoiceService } from '../../services/invoice.service';
 import { InvoiceStatus, Invoice } from '../../models/Invoice';
 import { Customer } from '../../models/Customer';
+import { Vendor } from '../../models/Vendor';
 
 /**
  * Controlador para la gestión de facturas electrónicas
@@ -83,6 +84,22 @@ export class InvoiceController {
         });
         return;
       }
+
+      // Agregar datos completos del vendedor desde Vendor
+      const vendorRepo = AppDataSource.getRepository(Vendor);
+      const vendorEntity = await vendorRepo.findOne({ where: { userId: invoice.vendorId }, relations: ['user'] });
+      const vendorData = vendorEntity ? {
+        firstName: vendorEntity.user.firstName,
+        lastName: vendorEntity.user.lastName,
+        identificationType: vendorEntity.user.identificationType,
+        identificationNumber: vendorEntity.user.identificationNumber,
+        email: vendorEntity.email,
+        phone: vendorEntity.phone,
+        address: vendorEntity.address,
+        city: vendorEntity.city
+      } : null;
+      // Reemplazar invoice.vendor con datos detallados del vendor
+      (invoice as any).vendor = vendorData;
 
       res.status(200).json({
         success: true,
@@ -334,19 +351,69 @@ export class InvoiceController {
   };
 
   /**
-   * Obtiene todas las facturas de la empresa autenticada
+   * Obtiene todas las facturas de un vendedor
    */
-  public getAllInvoices = async (req: Request, res: Response): Promise<Response> => {
-    const companyId = (req as any).user?.companyId;
-    if (!companyId) {
-      return res.status(400).json({ success: false, message: 'Usuario no asociado a una empresa' });
-    }
+  public getVendorInvoices = async (req: Request, res: Response): Promise<Response> => {
+    // Obtener facturas del vendor mediante su userId
+    const { vendorId } = req.params;
     try {
-      const invoices = await this.invoiceService.getCompanyInvoices(companyId);
-      return res.status(200).json(invoices);
+      const vendorRepo = AppDataSource.getRepository(Vendor);
+      const vendor = await vendorRepo.findOne({ where: { id: vendorId } });
+      if (!vendor || !vendor.userId) {
+        return res.status(404).json({ success: false, message: 'Vendedor no encontrado o sin userId' });
+      }
+      const userId = vendor.userId;
+      const invoiceRepository = AppDataSource.getRepository(Invoice);
+      const invoices = await invoiceRepository.createQueryBuilder('invoice')
+        .leftJoinAndSelect('invoice.customer', 'customer')
+        .leftJoinAndSelect('invoice.items', 'items')
+        .where('invoice.vendorId = :userId', { userId })
+        .orderBy('invoice.issueDate', 'DESC')
+        .getMany();
+      return res.status(200).json({ success: true, data: invoices });
+    } catch (error: any) {
+      console.error('Error al obtener facturas de vendedor:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener las facturas', error: error.message });
+    }
+  };
+
+  /**
+   * Obtener todas las facturas de la empresa autenticada
+   */
+  public getAllInvoices = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const companyId = (req as any).user?.companyId;
+      if (!companyId) {
+        res.status(400).json({ success: false, message: 'Usuario no asociado a una empresa' });
+        return;
+      }
+      // Obtener facturas de la compañía, opcionalmente filtradas por año y mes
+      const repo = AppDataSource.getRepository(Invoice);
+      let qb = repo.createQueryBuilder('invoice')
+        .leftJoinAndSelect('invoice.customer', 'customer')
+        .where('invoice.companyId = :companyId', { companyId });
+      // Filtros opcionales
+      const y = req.query.year as string;
+      const m = req.query.month as string;
+      
+      if (y) {
+        const yr = parseInt(y, 10);
+        // Usar strftime en lugar de EXTRACT para SQLite
+        qb = qb.andWhere("strftime('%Y', invoice.issueDate) = :yr", { yr: yr.toString() });
+      }
+      if (m) {
+        const mn = parseInt(m, 10);
+        // Asegurarse de que el mes tenga dos dígitos (01, 02, etc.)
+        const monthStr = mn.toString().padStart(2, '0');
+        // Usar strftime en lugar de EXTRACT para SQLite
+        qb = qb.andWhere("strftime('%m', invoice.issueDate) = :mn", { mn: monthStr });
+        console.log(`Aplicando filtro de mes: ${monthStr} (valor original: ${m})`);
+      }
+      const invoices = await qb.orderBy('invoice.issueDate', 'ASC').getMany();
+      res.status(200).json({ success: true, data: invoices });
     } catch (error) {
       console.error('Error al obtener todas las facturas:', error);
-      return res.status(500).json({ success: false, message: 'Error al obtener las facturas', error: error.message });
+      res.status(500).json({ success: false, message: 'Error al obtener las facturas', error: (error as Error).message });
     }
   };
 
@@ -355,7 +422,7 @@ export class InvoiceController {
    * @param req Request
    * @param res Response
    */
-  public async downloadInvoice(req: Request, res: Response): Promise<void> {
+  public downloadInvoice = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id, format } = req.params;
       const invoice = await this.invoiceService.getInvoiceWithRelations(id);
@@ -391,5 +458,102 @@ export class InvoiceController {
       console.error('Error al descargar factura:', error);
       res.status(500).json({ success: false, message: 'Error al descargar la factura', error: error.message });
     }
-  }
+  };
+
+  /**
+   * Obtener estadísticas mensuales de facturas para dashboard
+   */
+  public getInvoicesStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const companyId = (req as any).user?.companyId;
+      
+      if (!companyId) {
+        res.status(400).json({ success: false, message: 'Usuario no asociado a una empresa' });
+        return;
+      }
+      
+      const year = parseInt(req.query.year as string, 10) || new Date().getFullYear();
+      const month = req.query.month as string;
+      
+      console.log('Filtros recibidos en getInvoicesStats:', { year, month });
+      
+      const repo = AppDataSource.getRepository(Invoice);
+      
+      // Tipo para filas crudas de estadísticas
+      type RawRow = { month: string; sales: string; tax: string };
+      
+      // Construir la consulta base
+      let qb = repo.createQueryBuilder('invoice')
+        .select("strftime('%m', invoice.issueDate)", 'month')
+        .addSelect('SUM(invoice.total)', 'sales')
+        .addSelect('SUM(invoice.taxTotal)', 'tax')
+        .where('invoice.companyId = :companyId', { companyId })
+        .andWhere("strftime('%Y', invoice.issueDate) = :year", { year: year.toString() });
+      
+      // Aplicar filtro de mes si se proporciona
+      if (month) {
+        const monthStr = parseInt(month, 10).toString().padStart(2, '0');
+        qb = qb.andWhere("strftime('%m', invoice.issueDate) = :month", { month: monthStr });
+        console.log(`Aplicando filtro de mes en getInvoicesStats: ${monthStr} (valor original: ${month})`);
+      }
+      
+      // Ejecutar la consulta
+      const raw: RawRow[] = await qb
+        .groupBy('month')
+        .orderBy('month')
+        .getRawMany();
+      const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      
+      const salesData = months.map((m, idx) => {
+        // En SQLite con strftime, los meses vienen como '01', '02', etc.
+        const monthStr = (idx + 1).toString().padStart(2, '0');
+        const entry = raw.find(r => r.month === monthStr);
+        
+        const sales = entry ? Number(entry.sales || 0) : 0;
+        const prev = idx > 0 ?
+          Number(raw.find(r => r.month === (idx).toString().padStart(2, '0'))?.sales || 0) : 0;
+          
+        return { period: m, sales, previousPeriodSales: prev };
+      });
+      const taxData = months.map((m, idx) => {
+        // En SQLite con strftime, los meses vienen como '01', '02', etc.
+        const monthStr = (idx + 1).toString().padStart(2, '0');
+        const entry = raw.find(r => r.month === monthStr);
+        
+        const taxAmount = entry ? Number(entry.tax || 0) : 0;
+        const sales = entry ? Number(entry.sales || 0) : 0;
+        const base = sales - taxAmount;
+        
+        return { period: m, baseAmount: base, taxAmount };
+      });
+      // Document status totals
+      const allInv: Invoice[] = await repo.find({ where: { company: { id: companyId } } });
+      
+      const statusCounts: Record<string, number> = { draft:0, issued:0, approved:0, rejected:0, pending:0 };
+      allInv.forEach(inv => {
+        const st = inv.status || 'pending';
+        // Mapear 'accepted' a 'approved' si es necesario
+        const mappedStatus = st.toString() === 'accepted' ? 'approved' : st.toString();
+        if (statusCounts[mappedStatus] !== undefined) statusCounts[mappedStatus]++;
+      });
+      
+      const documentStatusData = Object.entries(statusCounts).map(([status, count]) => ({ status: status as any, count }));
+      
+      // Totals
+      const totalSales = salesData.reduce((sum, d) => sum + d.sales, 0);
+      const totalIva = taxData.reduce((sum, d) => sum + d.taxAmount, 0);
+      const totalInvoices = allInv.length;
+      
+      const salesMetrics = [
+        { label: 'Ventas Totales', value: `$${totalSales.toLocaleString()}` },
+        { label: 'IVA Total', value: `$${totalIva.toLocaleString()}` },
+        { label: 'Facturas Emitidas', value: totalInvoices }
+      ];
+      
+      res.status(200).json({ success: true, data: { salesMetrics, salesData, taxData, documentStatusData } });
+    } catch (error) {
+      console.error('Error al obtener estadísticas de facturas:', error);
+      res.status(500).json({ success: false, message: 'Error al obtener estadísticas', error: (error as Error).message });
+    }
+  };
 }

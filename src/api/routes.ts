@@ -10,6 +10,7 @@ import certificateRoutes from './routes/certificate.routes';
 import dianSimulatorRoutes from './routes/dianSimulator.routes';
 import setupRoutes from './routes/setup.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import vendorRoutes from './routes/vendor.routes';
 import { authMiddleware } from '../middleware/auth.middleware';
 
 const router = Router();
@@ -23,10 +24,12 @@ router.use('/users', authMiddleware, userRoutes);
 router.use('/companies', authMiddleware, companyRoutes);
 router.use('/customers', authMiddleware, customerRoutes);
 router.use('/products', authMiddleware, productRoutes);
+// Habilitar authMiddleware en facturas para que req.user esté disponible
 router.use('/invoices', authMiddleware, invoiceRoutes);
 router.use('/tax-rates', authMiddleware, taxRateRoutes);
 router.use('/certificates', authMiddleware, certificateRoutes);
 router.use('/dian-simulator', authMiddleware, dianSimulatorRoutes);
+router.use('/vendors', authMiddleware, vendorRoutes);
 router.use('/dashboard', authMiddleware, dashboardRoutes);
 
 export default router;

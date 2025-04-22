@@ -106,16 +106,18 @@ function generateInvoiceHTML(invoice: Invoice): string {
         </div>
         <div class="section parties">
           <div class="party">
-            <h3>Emisor</h3>
-            <p><strong>${invoice.company.name}</strong></p>
-            <p>NIT: ${invoice.company.nit}-${invoice.company.dv}</p>
-            <p>${invoice.company.address}</p>
-          </div>
-          <div class="party">
             <h3>Adquiriente</h3>
             <p><strong>${invoice.customer.name}</strong></p>
-            <p>${getIdentificationTypeName(invoice.customer.identificationType)}: ${invoice.customer.identificationNumber}${invoice.customer.dv ? '-'+invoice.customer.dv : ''}</p>
+            <p>${getIdentificationTypeName(invoice.customer.identificationType)}: ${invoice.customer.identificationNumber}${invoice.customer.dv ? '-' + invoice.customer.dv : ''}</p>
             <p>${invoice.customer.address}</p>
+          </div>
+          <div class="party">
+            <h3>Vendedor</h3>
+            <p><strong>${invoice.vendor.firstName} ${invoice.vendor.lastName}</strong></p>
+            <p>Identificación: ${invoice.vendor.identificationType} ${invoice.vendor.identificationNumber}</p>
+            <p>${invoice.vendor.address}, ${invoice.vendor.city}</p>
+            <p>Email: ${invoice.vendor.email}</p>
+            <p>Teléfono: ${invoice.vendor.phone}</p>
           </div>
         </div>
         <div class="section">

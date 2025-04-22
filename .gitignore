@@ -8,3 +8,5 @@ yarn.lock
 /frontend/yarn.lock
 /frontend/.env
 /frontend/.env.example
+/dist
+/frontend/dist

@@ -10,6 +10,7 @@ import { Customer } from '../models/Customer';
 import { Company } from '../models/Company';
 import { Product } from '../models/Product';
 import { Certificate } from '../models/Certificate';
+import { Vendor } from '../models/Vendor'; // Import Vendor
 import { DianSimulator } from '../simulators/dian.simulator';
 import { CertificateSimulator } from '../simulators/certificate.simulator';
 import { EmailSimulator } from '../simulators/email.simulator';
@@ -278,7 +279,8 @@ export class InvoiceService {
    * @param invoiceId ID de la factura
    */
   public async getInvoiceWithRelations(invoiceId: string): Promise<Invoice | undefined> {
-    return AppDataSource
+    // Obtener factura con relaciones básicas
+    const invoice = await AppDataSource
       .getRepository(Invoice)
       .createQueryBuilder('invoice')
       .leftJoinAndSelect('invoice.company', 'company')
@@ -287,6 +289,49 @@ export class InvoiceService {
       .leftJoinAndSelect('items.product', 'product')
       .where('invoice.id = :invoiceId', { invoiceId })
       .getOne();
+    if (!invoice) return undefined;
+    // Cargar datos completos del vendedor desde Vendor (buscar por userId)
+    const vendorRepo = AppDataSource.getRepository(Vendor);
+    // Encontrar vendor por userId o por id
+    const vendorEntity = await vendorRepo.findOne({
+      where: [
+        { userId: invoice.vendorId },
+        { id: invoice.vendorId }
+      ],
+      relations: ['user']
+    });
+    const vendorData = vendorEntity ? {
+      firstName: vendorEntity.user.firstName,
+      lastName: vendorEntity.user.lastName,
+      identificationType: vendorEntity.user.identificationType,
+      identificationNumber: vendorEntity.user.identificationNumber,
+      email: vendorEntity.email,
+      phone: vendorEntity.phone,
+      address: vendorEntity.address,
+      city: vendorEntity.city
+    } : {
+      firstName: '', lastName: '', identificationType: '', identificationNumber: '',
+      email: '', phone: '', address: '', city: ''
+    };
+    (invoice as any).vendor = vendorData;
+    return invoice;
+  }
+
+  /**
+   * Obtener facturas de una compañía con filtros
+   */
+  public async getCompanyInvoices(
+    companyId: string,
+    status?: InvoiceStatus,
+    customerId?: string,
+    createdBy?: string
+  ): Promise<Invoice[]> {
+    const filters: Record<string, any> = { companyId };
+    if (status) filters.status = status;
+    if (customerId) filters.customerId = customerId;
+    if (createdBy) filters.createdBy = createdBy;
+    const response = await this.getInvoices(filters, 1, 1000);
+    return response.data;
   }
 
   /**
@@ -319,7 +364,8 @@ export class InvoiceService {
     }
     
     if (createdBy) {
-      query = query.andWhere('invoice.createdBy = :createdBy', { createdBy });
+      // Filtrar por vendorId en la factura
+      query = query.andWhere('invoice.vendorId = :createdBy', { createdBy });
     }
     
     // Ordenar por fecha de emisión descendente (más recientes primero)

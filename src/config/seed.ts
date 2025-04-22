@@ -6,6 +6,7 @@ import { TaxRate, TaxType } from '../models/TaxRate';
 import { Customer, CustomerType, IdentificationType } from '../models/Customer';
 import { Product } from '../models/Product';
 import { Certificate, CertificateStatus } from '../models/Certificate';
+import { Vendor } from '../models/Vendor';
 
 /**
  * Seed the database with initial data
@@ -86,6 +87,32 @@ export const seedDatabase = async (): Promise<void> => {
     vendorUser2.companyId = company1.id;
     await getConnection().manager.save(vendorUser2);
     console.log('✅ Usuario vendor2 creado');
+    
+    // Seed vendors table from vendorUsers
+    const vendorRepo = getConnection().manager.getRepository(Vendor);
+    const vendorEntity1 = new Vendor();
+    vendorEntity1.name = `${vendorUser1.firstName} ${vendorUser1.lastName}`;
+    vendorEntity1.address = '';
+    vendorEntity1.city = '';
+    vendorEntity1.department = '';
+    vendorEntity1.phone = '';
+    vendorEntity1.email = vendorUser1.email;
+    vendorEntity1.companyId = vendorUser1.companyId;
+    // Relacionar Vendor con User para identificación precisa
+    vendorEntity1.userId = vendorUser1.id;
+    await vendorRepo.save(vendorEntity1);
+    const vendorEntity2 = new Vendor();
+    vendorEntity2.name = `${vendorUser2.firstName} ${vendorUser2.lastName}`;
+    vendorEntity2.address = '';
+    vendorEntity2.city = '';
+    vendorEntity2.department = '';
+    vendorEntity2.phone = '';
+    vendorEntity2.email = vendorUser2.email;
+    vendorEntity2.companyId = vendorUser2.companyId;
+    // Relacionar Vendor con User para identificación precisa
+    vendorEntity2.userId = vendorUser2.id;
+    await vendorRepo.save(vendorEntity2);
+    console.log('✅ Vendors creados en seed.ts');
     
     // Create tax rates
     const taxRates = [

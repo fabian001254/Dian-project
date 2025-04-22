@@ -254,6 +254,22 @@ export async function generateInvoiceXML(invoice: Invoice): Promise<string> {
           } : undefined
         }
       },
+      // Vendedor asociado
+      'cac:SellerSupplierParty': {
+        'cac:Party': {
+          'cac:PartyIdentification': {
+            'cbc:ID': { _: invoice.vendor.identificationNumber, $: { 'schemeAgencyID': '195', 'schemeAgencyName': 'CO, DIAN', 'schemeName': invoice.vendor.identificationType } }
+          },
+          'cac:PartyName': { 'cbc:Name': `${invoice.vendor.firstName} ${invoice.vendor.lastName}` },
+          'cac:PhysicalLocation': {
+            'cac:Address': {
+              'cbc:Line': invoice.vendor.address,
+              'cbc:CityName': invoice.vendor.city
+            }
+          },
+          'cac:Contact': { 'cbc:ElectronicMail': invoice.vendor.email }
+        }
+      },
       // Información de pago
       'cac:PaymentMeans': {
         'cbc:ID': mapPaymentMethodToCode(invoice.paymentMethod),

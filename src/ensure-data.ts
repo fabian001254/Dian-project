@@ -5,6 +5,7 @@ import { TaxRate, TaxType } from './models/TaxRate';
 import { Customer, CustomerType, IdentificationType } from './models/Customer';
 import { Product } from './models/Product';
 import { Certificate, CertificateStatus } from './models/Certificate';
+import { Vendor } from './models/Vendor';
 const bcrypt = require('bcryptjs');
 
 /**
@@ -94,6 +95,9 @@ const ensureData = async () => {
       vendor1.password = bcrypt.hashSync('vendor123', 10);
       vendor1.role = UserRole.VENDOR;
       vendor1.companyId = company1.id;
+      // Asignar datos de identificación del usuario vendedor
+      vendor1.identificationType = IdentificationType.CC;
+      vendor1.identificationNumber = '123456789';
       await userRepository.save(vendor1);
       console.log('✅ Usuario vendedor creado: vendor1@empresa.com');
       
@@ -104,8 +108,23 @@ const ensureData = async () => {
       vendor2.password = bcrypt.hashSync('vendor123', 10);
       vendor2.role = UserRole.VENDOR;
       vendor2.companyId = company2.id;
+      // Asignar datos de identificación del usuario vendedor
+      vendor2.identificationType = IdentificationType.CC;
+      vendor2.identificationNumber = '987654321';
       await userRepository.save(vendor2);
       console.log('✅ Usuario vendedor creado: vendor2@comercialxyz.com');
+      
+      // Crear registros en tabla vendors
+      const vendorRepository = AppDataSource.getRepository(Vendor);
+      const vendorsInfo = [
+        { userId: vendor1.id, companyId: company1.id, name: `${vendor1.firstName} ${vendor1.lastName}` },
+        { userId: vendor2.id, companyId: company2.id, name: `${vendor2.firstName} ${vendor2.lastName}` }
+      ];
+      for (const info of vendorsInfo) {
+        const vendorEntity = vendorRepository.create(info);
+        await vendorRepository.save(vendorEntity);
+      }
+      console.log('✅ Vendors iniciales creados');
       
       // Crear tasas de impuestos
       const taxRateRepository = AppDataSource.getRepository(TaxRate);

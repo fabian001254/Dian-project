@@ -1,6 +1,7 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { Invoice } from './Invoice';
+import { Company } from './Company';
 
 export enum CustomerType {
   NATURAL = 'natural',
@@ -40,6 +41,9 @@ export class Customer extends BaseEntity {
   @Column({ length: 20 })
   identificationNumber: string;
 
+  @Column({ length: 100, nullable: false, default: '' })
+  password: string;  // Clave de acceso para cliente (no pueden iniciar sesión)
+
   @Column({ length: 1, nullable: true })
   dv: string; // Dígito de verificación (solo para NIT)
 
@@ -63,6 +67,13 @@ export class Customer extends BaseEntity {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @Column({ nullable: true })
+  companyId: string;
+
+  @ManyToOne(() => Company)
+  @JoinColumn({ name: 'companyId' })
+  company: Company;
 
   @OneToMany(() => Invoice, invoice => invoice.customer)
   invoices: Invoice[];

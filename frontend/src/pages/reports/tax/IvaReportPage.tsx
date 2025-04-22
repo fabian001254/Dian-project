@@ -6,7 +6,7 @@ import { FaChartBar, FaFilter, FaArrowLeft, FaDownload, FaTable } from 'react-ic
 import { useAuth } from '../../../context/AuthContext';
 import SectionLoader from '../../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
-import ReportsService, { ReportFilters, IvaDetail, ReportSummary } from '../../../services/reports.service';
+import ReportsService, { ReportFilters, IvaDetail, ReportSummary, DashboardStats } from '../../../services/reports.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
@@ -255,16 +255,16 @@ const IvaReportPage: React.FC = () => {
   
   // Datos para el gráfico
   const chartData = {
-    labels: detailData.map(item => item.documentNumber),
+    labels: detailData?.map(item => item.documentNumber) ?? [],
     datasets: [
       {
         label: 'Base Gravable',
-        data: detailData.map(item => item.baseAmount),
+        data: detailData?.map(item => item.baseAmount) ?? [],
         backgroundColor: 'rgba(54, 162, 235, 0.6)',
       },
       {
         label: 'IVA',
-        data: detailData.map(item => item.ivaAmount),
+        data: detailData?.map(item => item.ivaAmount) ?? [],
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
       },
     ],
@@ -275,12 +275,31 @@ const IvaReportPage: React.FC = () => {
     console.log('DEBUG IvaReportPage - loadIvaReportData start with filters:', filters);
     setLoading(true);
     try {
-      const data = await ReportsService.getIvaReport(filters);
-      console.log('DEBUG IvaReportPage - received data:', data);
-      setSummaryData(data.summary);
-      console.log('DEBUG IvaReportPage - summaryData set to:', data.summary);
-      setDetailData(data.details);
-      console.log('DEBUG IvaReportPage - detailData set to:', data.details);
+      // Obtener datos de IVA mensual desde el dashboard
+      const dash: DashboardStats = await ReportsService.getDashboardStats(filters);
+      const taxArr = dash.taxData || [];
+      console.log('DEBUG IvaReportPage - taxData from dashboard:', taxArr);
+      // Calcular totales
+      const totalBase = taxArr.reduce((sum, t) => sum + t.baseAmount, 0);
+      const totalIva = taxArr.reduce((sum, t) => sum + t.taxAmount, 0);
+      // Establecer summary
+      setSummaryData([
+        { label: 'Base Gravable', value: totalBase },
+        { label: 'IVA Generado', value: totalIva },
+        { label: 'Total', value: totalBase + totalIva }
+      ]);
+      // Construir detalles para tabla
+      const details: IvaDetail[] = taxArr.map(t => ({
+        id: t.period,
+        date: t.period,
+        documentNumber: t.period,
+        client: '',
+        baseAmount: t.baseAmount,
+        ivaRate: t.baseAmount ? Math.round((t.taxAmount / t.baseAmount) * 100) : 0,
+        ivaAmount: t.taxAmount
+      }));
+      setDetailData(details);
+      console.log('DEBUG IvaReportPage - detailData set to:', details);
     } catch (error) {
       console.error('Error al cargar datos del reporte de IVA:', error);
       Swal.fire({

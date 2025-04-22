@@ -6,7 +6,7 @@ import { FaFileAlt, FaFilter, FaArrowLeft, FaDownload, FaTable, FaChartPie, FaCh
 import { useAuth } from '../../../context/AuthContext';
 import SectionLoader from '../../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
-import ReportsService, { ReportFilters, DocumentDetail } from '../../../services/reports.service';
+import ReportsService, { ReportFilters, DocumentDetail, DashboardStats } from '../../../services/reports.service';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie, Doughnut } from 'react-chartjs-2';
 
@@ -171,6 +171,7 @@ const SummaryIcon = styled.div<{ status?: string }>`
       case 'issued': return 'var(--color-info)';
       case 'accepted': return 'var(--color-success)';
       case 'rejected': return 'var(--color-danger)';
+      case 'pending': return 'var(--color-warning)';
       default: return 'var(--color-primary)';
     }
   }};
@@ -296,7 +297,7 @@ const StatusBadge = styled.span<{ status: string }>`
 
 // Interfaces
 interface DocumentStatusSummary {
-  status: 'draft' | 'issued' | 'accepted' | 'rejected';
+  status: 'draft' | 'issued' | 'accepted' | 'rejected' | 'pending';
   count: number;
   icon: React.ReactNode;
   label: string;
@@ -313,7 +314,7 @@ const DocumentStatusPage: React.FC = () => {
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'draft' | 'issued' | 'accepted' | 'rejected' | 'pending'>('all');
   const [selectedStartDate, setSelectedStartDate] = useState('');
   const [selectedEndDate, setSelectedEndDate] = useState('');
-  const [statusSummary, setStatusSummary] = useState<{status: string; count: number; icon: string; label: string}[]>([]);
+  const [statusSummary, setStatusSummary] = useState<DocumentStatusSummary[]>([]);
   const [documentDetails, setDocumentDetails] = useState<DocumentDetail[]>([]);
   const [filters, setFilters] = useState<ReportFilters>({
     documentType: 'all',
@@ -347,9 +348,17 @@ const DocumentStatusPage: React.FC = () => {
   const loadDocumentStatusData = async () => {
     setLoading(true);
     try {
-      const data = await ReportsService.getDocumentStatusReport(filters);
-      setStatusSummary(data.summary);
-      setDocumentDetails(data.details);
+      // Obtener estado de documentos desde el dashboard
+      const dash: DashboardStats = await ReportsService.getDashboardStats(filters);
+      setStatusSummary(dash.documentStatusData.map(d => ({
+        status: d.status,
+        count: d.count,
+        icon: getStatusIcon(d.status),
+        label: getStatusLabel(d.status)
+      })));
+      // Obtener detalles de documentos
+      const report = await ReportsService.getDocumentStatusReport(filters);
+      setDocumentDetails(report.details);
     } catch (error) {
       console.error('Error al cargar datos del reporte de estado de documentos:', error);
       Swal.fire({
@@ -377,7 +386,7 @@ const DocumentStatusPage: React.FC = () => {
   }, [documentType, selectedStatus, selectedStartDate, selectedEndDate]);
   
   // Filtrar documentos según los filtros seleccionados
-  const filteredDocuments = documentDetails.filter(doc => {
+  const filteredDocuments = (documentDetails || []).filter(doc => {
     // Filtrar por tipo de documento
     if (documentType !== 'all') {
       if (documentType === 'invoice' && doc.type !== 'Factura') return false;
@@ -388,34 +397,29 @@ const DocumentStatusPage: React.FC = () => {
     // Filtrar por estado
     if (selectedStatus !== 'all' && doc.status !== selectedStatus) return false;
     
-    // Filtrar por fecha
-    const docDate = new Date(doc.date);
-    const startDate = new Date(selectedStartDate);
-    const endDate = new Date(selectedEndDate);
-    
-    if (docDate < startDate || docDate > endDate) return false;
+    // Filtrar por fecha si hay fechas seleccionadas
+    if (selectedStartDate && selectedEndDate) {
+      const docDate = new Date(doc.date);
+      const startDate = new Date(selectedStartDate);
+      const endDate = new Date(selectedEndDate);
+      if (docDate < startDate || docDate > endDate) return false;
+    }
     
     return true;
   });
   
   // Datos para el gráfico de torta
   const pieChartData = {
-    labels: ['Borradores', 'Emitidas', 'Aceptadas', 'Rechazadas', 'Pendientes'],
+    labels: statusSummary.map(item => item.label),
     datasets: [
       {
-        data: [
-          documentDetails.filter(doc => doc.status === 'draft').length,
-          documentDetails.filter(doc => doc.status === 'issued').length,
-          documentDetails.filter(doc => doc.status === 'accepted').length,
-          documentDetails.filter(doc => doc.status === 'rejected').length,
-          documentDetails.filter(doc => doc.status === 'pending').length,
-        ],
+        data: statusSummary.map(item => item.count),
         backgroundColor: [
-          'rgba(255, 206, 86, 0.6)', // Amarillo para borradores
-          'rgba(54, 162, 235, 0.6)', // Azul para emitidas
-          'rgba(75, 192, 192, 0.6)', // Verde para aceptadas
-          'rgba(255, 99, 132, 0.6)', // Rojo para rechazadas
-          'rgba(153, 102, 255, 0.6)', // Morado para pendientes
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
         ],
         borderColor: [
           'rgba(255, 206, 86, 1)',
@@ -532,7 +536,7 @@ const DocumentStatusPage: React.FC = () => {
     switch (status) {
       case 'draft': return 'Borrador';
       case 'issued': return 'Emitida';
-      case 'accepted': return 'Aceptada';
+      case 'accepted': return 'Aprobada';
       case 'rejected': return 'Rechazada';
       case 'pending': return 'Pendiente';
       default: return status;
@@ -597,7 +601,7 @@ const DocumentStatusPage: React.FC = () => {
             <option value="all">Todos</option>
             <option value="draft">Borradores</option>
             <option value="issued">Emitidas</option>
-            <option value="accepted">Aceptadas</option>
+            <option value="accepted">Aprobadas</option>
             <option value="rejected">Rechazadas</option>
             <option value="pending">Pendientes</option>
           </select>
@@ -667,7 +671,7 @@ const DocumentStatusPage: React.FC = () => {
         {activeTab === 'chart' && (
           <ChartContainer>
             <ChartWrapper>
-              <Doughnut 
+              <Pie 
                 data={pieChartData} 
                 options={{
                   responsive: true,

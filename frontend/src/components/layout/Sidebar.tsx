@@ -9,9 +9,7 @@ import {
   FaCertificate, 
   FaChartBar, 
   FaUserTie,
-  FaCog,
-  FaBook,
-  FaQuestionCircle
+  FaCog
 } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -130,11 +128,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     { path: '/reports', icon: <FaChartBar />, text: 'Reportes' },
   ];
   
-  const educationalItems = [
-    { path: '/learning', icon: <FaBook />, text: 'Aprendizaje' },
-    { path: '/help', icon: <FaQuestionCircle />, text: 'Ayuda' },
-  ];
-  
   const settingsItems = [
     { path: '/settings', icon: <FaCog />, text: 'Configuración' },
   ];
@@ -149,21 +142,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       
       <MenuList>
         {menuItems.map((item) => (
-          <MenuItem key={item.path}>
-            <MenuLink 
-              to={item.path} 
-              isOpen={isOpen}
-              className={location.pathname === item.path ? 'active' : ''}
-            >
-              {item.icon}
-              <MenuText isOpen={isOpen}>{item.text}</MenuText>
-            </MenuLink>
-          </MenuItem>
-        ))}
-        
-        <SectionTitle isOpen={isOpen}>Educativo</SectionTitle>
-        
-        {educationalItems.map((item) => (
           <MenuItem key={item.path}>
             <MenuLink 
               to={item.path} 

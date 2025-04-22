@@ -712,7 +712,7 @@ const CreateInvoicePage: React.FC = () => {
               <Button
                 onClick={() => setIsCreateProductOpen(true)}
                 size="small"
-                variant="primary"
+                variant="secondary"
                 style={{ fontSize: '0.85rem', padding: '2px 6px', height: '28px', lineHeight: '1' }}
               >
                 Crear Producto
@@ -982,19 +982,27 @@ const CreateInvoicePage: React.FC = () => {
       <CreateProductModal
         isOpen={isCreateProductOpen}
         onClose={() => setIsCreateProductOpen(false)}
-        onSave={(productData) => {
-          const newProduct: Product = {
-            id: uuidv4(),
-            name: productData.name,
-            description: productData.description,
-            price: productData.price,
-            taxRate: productData.taxRate
-          };
-          setProducts(prev => [...prev, newProduct]);
-          addItem(newProduct.id);
-          setIsCreateProductOpen(false);
-        }}
         vendorId={invoiceData.vendorId}
+        onSave={async (productData) => {
+          try {
+            // Crear producto en backend usando vendorId seleccionado en el modal
+            const payload = {
+              ...productData,
+              taxRateId: productData.taxRate,
+              vendorId: productData.vendorId,
+            };
+            const response = await axios.post('/api/products', payload);
+            const created: Product = response.data.data || response.data;
+            // Actualizar lista y agregar al invoice
+            setProducts(prev => [...prev, created]);
+            addItemWithProduct(created);
+            setIsCreateProductOpen(false);
+            Swal.fire('Éxito', 'Producto creado exitosamente', 'success');
+          } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'No se pudo crear el producto', 'error');
+          }
+        }}
       />
 
       {/* Modal para seleccionar cliente */}

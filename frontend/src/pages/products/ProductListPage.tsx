@@ -32,6 +32,8 @@ interface Product {
   };
   customerId?: string;
   customerName?: string;
+  vendorName?: string; // Nombre del vendedor extraído de la descripción
+  vendorId?: string;   // ID del vendedor extraído de la descripción
   createdAt?: string;
 }
 
@@ -319,6 +321,27 @@ const GeneralBadge = styled.span`
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 `;
 
+const VendorBadge = styled.span`
+  display: inline-block;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  cursor: default;
+  border: 1px solid var(--color-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Destacar más el vendedor */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+  
+  /* Efecto de fondo con gradiente */
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, rgba(var(--color-primary-rgb), 0.2) 100%);
+`;
+
 const ProductsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -484,6 +507,17 @@ const ProductCardTax = styled.div`
   margin-bottom: var(--spacing-sm);
 `;
 
+const ProductCardVendor = styled.div`
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-dark);
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  padding: 4px 8px;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  border-radius: var(--border-radius-sm);
+  display: inline-block;
+`;
+
 const ProductCardFooter = styled.div`
   display: flex;
   justify-content: space-between;
@@ -543,7 +577,17 @@ const ProductListPage: React.FC = () => {
         });
         
         if (response.data.success) {
-          setProducts(response.data.data);
+          // Procesar los productos para extraer información del vendedor de la descripción
+          const processedProducts = response.data.data.map((product: any) => {
+            const vendorInfo = extractVendorInfo(product.description);
+            return {
+              ...product,
+              vendorName: vendorInfo.name,
+              vendorId: vendorInfo.id
+            };
+          });
+          
+          setProducts(processedProducts);
         } else {
           setError('Error al cargar los productos: ' + response.data.message);
         }
@@ -552,6 +596,24 @@ const ProductListPage: React.FC = () => {
       } finally {
         setLoading(false);
       }
+    };
+    
+    // Función para extraer la información del vendedor de la descripción
+    const extractVendorInfo = (description: string | undefined) => {
+      if (!description) return { name: null, id: null };
+      
+      // Buscar el patrón "Vendedor: [Nombre] (ID: [ID])"
+      const vendorRegex = /Vendedor:\s+([^(]+)\s+\(ID:\s+([^)]+)\)/i;
+      const match = description.match(vendorRegex);
+      
+      if (match && match.length >= 3) {
+        return {
+          name: match[1].trim(),
+          id: match[2].trim()
+        };
+      }
+      
+      return { name: null, id: null };
     };
 
     fetchProducts();
@@ -788,7 +850,7 @@ const ProductListPage: React.FC = () => {
             <tr>
               <th>Código</th>
               <th>Nombre</th>
-              <th>Cliente</th>
+              <th>Vendedor</th>
               <th>Descripción</th>
               <th>Precio</th>
               <th>Impuesto</th>
@@ -801,21 +863,30 @@ const ProductListPage: React.FC = () => {
                 <td>{product.code || '-'}</td>
                 <td>{product.name}</td>
                 <td style={{ 
-                  backgroundColor: product.customerName ? 'rgba(var(--color-primary-rgb), 0.05)' : 'rgba(var(--color-primary-rgb), 0.02)',
-                  border: product.customerName ? '1px solid rgba(var(--color-primary-rgb), 0.1)' : '1px solid rgba(var(--color-primary-rgb), 0.05)',
-                  borderRadius: 'var(--border-radius-sm)'
+                  backgroundColor: product.vendorName ? 'rgba(var(--color-primary-rgb), 0.1)' : 'transparent',
+                  border: product.vendorName ? '2px solid rgba(var(--color-primary-rgb), 0.3)' : 'none',
+                  borderRadius: 'var(--border-radius-md)',
+                  padding: '10px 15px',
+                  boxShadow: product.vendorName ? '0 2px 5px rgba(0, 0, 0, 0.05)' : 'none'
                 }}>
-                  {product.customerName ? (
-                    <CustomerBadge title={`ID: ${product.customerId}`}>
-                      {product.customerName}
-                    </CustomerBadge>
+                  {product.vendorName ? (
+                    <VendorBadge title={`ID: ${product.vendorId}`}>
+                      {product.vendorName}
+                    </VendorBadge>
                   ) : (
-                    <GeneralProductBadge title="Este es un producto general, disponible para todos los clientes">
-                      General
+                    <GeneralProductBadge title="Este producto no tiene vendedor asignado">
+                      Sin vendedor
                     </GeneralProductBadge>
                   )}
                 </td>
-                <td>{product.description || '-'}</td>
+                <td>
+                  {/* Mostrar la descripción sin la información del vendedor */}
+                  {product.description ? 
+                    (product.description.includes('\n\nVendedor:') ? 
+                      product.description.substring(0, product.description.indexOf('\n\nVendedor:')) : 
+                      product.description) || '-' : 
+                    '-'}
+                </td>
                 <td>{formatCurrency(product.price)}</td>
                 <td>{product.taxRate?.name || 'Sin impuesto'}</td>
                 <td>
@@ -842,12 +913,19 @@ const ProductListPage: React.FC = () => {
               </ProductCardHeader>
               <ProductCardBody>
                 <ProductCardCode>{product.code || 'Sin código'}</ProductCardCode>
-                <ProductCardDescription>{product.description || 'Sin descripción'}</ProductCardDescription>
+                <ProductCardDescription>
+                  {product.description ? 
+                    (product.description.includes('\n\nVendedor:') ? 
+                      product.description.substring(0, product.description.indexOf('\n\nVendedor:')) : 
+                      product.description) || 'Sin descripción' : 
+                    'Sin descripción'}
+                </ProductCardDescription>
                 <ProductCardTax>Impuesto: {product.taxRate?.name || 'Sin impuesto'}</ProductCardTax>
-                {product.customerName ? (
-                  <CustomerBadge>{product.customerName}</CustomerBadge>
+                <ProductCardVendor>Vendedor: {product.vendorName || 'Sin asignar'}</ProductCardVendor>
+                {product.vendorName ? (
+                  <VendorBadge title={`ID: ${product.vendorId}`}>{product.vendorName}</VendorBadge>
                 ) : (
-                  <GeneralBadge>General</GeneralBadge>
+                  <GeneralBadge>Sin vendedor</GeneralBadge>
                 )}
               </ProductCardBody>
               <ProductCardFooter>

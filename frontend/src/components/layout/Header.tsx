@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaBars, FaBell, FaQuestion, FaSignOutAlt, FaUser, FaCog } from 'react-icons/fa';
+import { FaBars, FaBell, FaSignOutAlt, FaUser, FaCog } from 'react-icons/fa';
 import Button from '../ui/Button';
 import ThemeToggle from '../ui/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
@@ -216,15 +216,12 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar, sidebarOpen }) =>
         <Button 
           variant="accent" 
           size="small"
+          onClick={() => navigate('/invoices/create')}
         >
           Nueva Factura
         </Button>
         
         <ThemeToggle />
-        
-        <IconButton>
-          <FaQuestion />
-        </IconButton>
         
         <IconButton>
           <FaBell />

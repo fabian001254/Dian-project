@@ -6,7 +6,7 @@ import { FaChartBar, FaFileExport, FaFilter, FaArrowLeft, FaDownload, FaCalendar
 import { useAuth } from '../../../context/AuthContext';
 import SectionLoader from '../../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
-import ReportsService, { ReportFilters, SalesDetail, SalesReportData, ReportSummary } from '../../../services/reports.service';
+import ReportsService, { ReportFilters, SalesDetail, SalesReportData, ReportSummary, DashboardStats } from '../../../services/reports.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
 
@@ -292,11 +292,15 @@ const SalesByPeriodPage: React.FC = () => {
   const loadSalesReportData = async () => {
     setLoading(true);
     try {
-      const data = await ReportsService.getSalesByPeriodReport(filters);
-      // Asegurarse de que los datos existan, si no, usar arrays vacíos
-      setSummaryData(data.summary || []);
-      setDetailData(data.details || []);
-      setChartData(data.chartData || []);
+      // Obtener datos de ventas desde el dashboard
+      const dash: DashboardStats = await ReportsService.getDashboardStats(filters);
+      const salesArr = dash.salesData || [];
+      // Resumen de métricas
+      setSummaryData(dash.salesMetrics || []);
+      // Chart data
+      setChartData(salesArr);
+      // Opcional: tabla de detalles vacía o puedes llamar getSalesByPeriodReport
+      setDetailData([]);
     } catch (error) {
       console.error('Error al cargar datos del reporte de ventas:', error);
       Swal.fire({
@@ -349,18 +353,11 @@ const SalesByPeriodPage: React.FC = () => {
   // Datos para el gráfico de barras
   const barChartData = {
     labels: chartData.map(item => item.period),
-    datasets: [
-      {
-        label: 'Ventas Actuales',
-        data: chartData.map(item => item.sales),
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-      },
-      ...(compareWithPrevious ? [{
-        label: 'Período Anterior',
-        data: chartData.map(item => item.previousPeriodSales || 0),
-        backgroundColor: 'rgba(153, 102, 255, 0.6)',
-      }] : []),
-    ],
+    datasets: [{
+      label: 'Ventas',
+      data: chartData.map(item => item.sales),
+      backgroundColor: 'rgba(255, 99, 132, 0.6)',
+    }]
   };
   
   const handleFilterChange = () => {

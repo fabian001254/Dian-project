@@ -36,6 +36,9 @@ import { CertificatesPage, CertificateSimulator, CertificateConfigPage, Certific
 // Report Pages
 import { ReportsDashboardPage, IvaReportPage, SalesByPeriodPage, DocumentStatusPage } from './pages/reports';
 
+// Settings Page
+import SettingsPage from './pages/settings/SettingsPage';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -143,6 +146,9 @@ const App: React.FC = () => {
             <Route path="reports/tax/iva" element={<IvaReportPage />} />
             <Route path="reports/sales/period" element={<SalesByPeriodPage />} />
             <Route path="reports/documents/status" element={<DocumentStatusPage />} />
+            
+            {/* Settings */}
+            <Route path="settings" element={<SettingsPage />} />
             
             {/* Profile Routes */}
             <Route path="profile" element={<ProfilePage />} />

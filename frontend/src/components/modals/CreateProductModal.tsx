@@ -33,7 +33,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
+  background-color: var(--color-white);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-md);
   width: 90%;
@@ -42,6 +42,10 @@ const ModalContent = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Dark mode */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -50,6 +54,9 @@ const ModalHeader = styled.div`
   align-items: center;
   padding: var(--spacing-md);
   border-bottom: 1px solid var(--color-border);
+  html[data-theme='dark'] & {
+    border-bottom: 1px solid var(--color-gray-dark);
+  }
 `;
 
 const ModalTitle = styled.h2`
@@ -74,6 +81,10 @@ const ModalBody = styled.div`
   padding: var(--spacing-md);
   overflow-y: auto;
   flex: 1;
+  /* Dark mode text */
+  html[data-theme='dark'] & {
+    color: var(--color-text);
+  }
 `;
 
 const FormGroup = styled.div`
@@ -93,6 +104,13 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
   onSave,
   vendorId
 }) => {
+  // Sincronizar vendorId recibido en formData
+  useEffect(() => {
+    if (vendorId) {
+      setFormData(prev => ({ ...prev, vendorId }));
+    }
+  }, [vendorId]);
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -101,7 +119,8 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
     vendorId: vendorId || ''
   });
   
-  const [vendors, setVendors] = useState<Array<{id: string, firstName: string, lastName: string}>>([]);
+  // Lista de vendedores desde la tabla vendors
+  const [vendors, setVendors] = useState<Array<{id: string, name: string}>>([]);
   const [loadingVendors, setLoadingVendors] = useState(false);
   
   const [errors, setErrors] = useState<{
@@ -138,7 +157,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const loadVendors = async () => {
     try {
       setLoadingVendors(true);
-      const response = await axios.get('/api/users', { params: { role: 'vendor' } });
+      const response = await axios.get('/api/vendors');
       if (response.data && response.data.success) {
         setVendors(response.data.data);
       }
@@ -261,12 +280,12 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 onChange={handleChange}
                 error={errors.vendorId}
                 fullWidth
-                disabled={loadingVendors}
+                disabled={loadingVendors || !!vendorId}
               >
                 <option value="">Seleccione un vendedor</option>
                 {vendors.map(v => (
                   <option key={v.id} value={v.id}>
-                    {v.firstName} {v.lastName}
+                    {v.name}
                   </option>
                 ))}
               </Select>
@@ -275,7 +294,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   Este producto se asociará específicamente al vendedor seleccionado.
                   {vendors.find(v => v.id === vendorId) && (
                     <div style={{ fontWeight: 'bold', marginTop: '3px' }}>
-                      Vendedor: {vendors.find(v => v.id === vendorId)?.firstName} {vendors.find(v => v.id === vendorId)?.lastName}
+                      Vendedor: {vendors.find(v => v.id === vendorId)?.name}
                     </div>
                   )}
                 </div>

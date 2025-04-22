@@ -264,13 +264,13 @@ export class ProductController {
   public createProduct = async (req: Request, res: Response): Promise<Response> => {
     try {
       // Log completo de los datos recibidos para diagnóstico
-      console.log('Datos recibidos en createProduct:', JSON.stringify(req.body, null, 2));
+      console.log('Datos recibidos en createProduct:', req.body);
       
-      const { name, description, code, price, taxRateId } = req.body;
-      const user = req.user as User;
-      if (user.role !== UserRole.VENDOR) {
-        return res.status(403).json({ success: false, message: 'Solo vendedores pueden crear productos' });
-      }
+      const { name, description, code, price, taxRateId, vendorId } = req.body;
+      // Permitir que cualquier usuario pueda crear productos
+      // Necesitamos hacer un cast para que TypeScript reconozca la propiedad user
+      const user = (req as any).user as User;
+      // Quitamos la restricción de rol para permitir que cualquier usuario pueda crear productos
       
       // Validar datos
       if (!name || !price || !taxRateId) {
@@ -308,9 +308,58 @@ export class ProductController {
       product.unitPrice = price; // Asegurarse de que unitPrice tenga el mismo valor que price
       product.unit = 'Unidad'; // Valor predeterminado para unit
       product.taxRateId = taxRateId;
-      // asignar empresa y vendedor
+      // asignar empresa
       product.companyId = user.companyId;
-      product.vendorId = user.id;
+      
+      // Manejar la asignación del vendedor
+      if (vendorId) {
+        try {
+          // Buscar el vendedor en la tabla vendors
+          const vendorRepository = AppDataSource.getRepository('vendors');
+          const vendor = await vendorRepository.findOne({
+            where: { id: vendorId },
+            relations: ['user'] // Cargar la relación con el usuario
+          });
+          
+          console.log('Vendedor encontrado:', vendor);
+          
+          // Guardar la información del vendedor en la descripción para referencia
+          if (vendor) {
+            // Construir el nombre del vendedor correctamente
+            const vendorName = vendor.user ? 
+              `${vendor.user.firstName || ''} ${vendor.user.lastName || ''}`.trim() : 
+              (vendor.name || 'Vendedor sin nombre');
+              
+            const vendorInfo = `\n\nVendedor: ${vendorName} (ID: ${vendorId})`;
+            product.description = description ? `${description}${vendorInfo}` : vendorInfo;
+            
+            // Si el vendedor tiene userId, lo asignamos
+            if (vendor.userId) {
+              product.vendorId = vendor.userId;
+              console.log(`Asignando vendorId: ${product.vendorId} (userId del vendedor)`);
+            } else {
+              console.log('El vendedor no tiene userId asociado, omitiendo vendorId');
+              // En lugar de eliminar la propiedad, la establecemos como undefined para evitar el error de clave foránea
+              // TypeScript no permite eliminar propiedades no opcionales
+              product.vendorId = undefined as any;
+            }
+          } else {
+            console.log('No se encontró el vendedor con ID:', vendorId);
+            product.description = description || '';
+            // En lugar de eliminar la propiedad, la establecemos como undefined
+            product.vendorId = undefined as any;
+          }
+        } catch (error) {
+          console.error('Error al buscar el vendedor:', error);
+          product.description = description || '';
+          // En lugar de eliminar la propiedad, la establecemos como undefined
+          product.vendorId = undefined as any;
+        }
+      } else {
+        product.description = description || '';
+        // En lugar de eliminar la propiedad, la establecemos como undefined
+        product.vendorId = undefined as any;
+      }
       
       console.log('Objeto producto antes de guardar:', JSON.stringify(product, null, 2));
       

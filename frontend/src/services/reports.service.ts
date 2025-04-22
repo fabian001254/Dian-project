@@ -371,40 +371,42 @@ export const ReportsService = {
     details: IvaDetail[];
   }> => {
     try {
-      const response = await api.get('/reports/iva', { params: filters });
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener reporte de IVA:', error);
-      
-      // Datos simulados como fallback
-      const details: IvaDetail[] = [];
-      for (let i = 1; i <= 10; i++) {
-        const baseAmount = 1000 * i;
-        const ivaRate = 19;
-        const ivaAmount = baseAmount * (ivaRate / 100);
-        
-        details.push({
-          id: `DOC-${i}`,
-          date: '2023-12-01',
-          documentNumber: `F-${1000 + i}`,
-          client: `Cliente ${i}`,
-          baseAmount,
-          ivaRate,
-          ivaAmount,
-        });
-      }
-      
+      const response = await api.get('/invoices', { params: filters });
+      const invoices: any[] = response.data?.data || [];
+      // Filtrar por año y mes
+      const filtered = invoices.filter(inv => {
+        const d = new Date(inv.date);
+        if (filters.year && d.getFullYear().toString() !== filters.year) return false;
+        if (filters.month && (d.getMonth() + 1).toString() !== filters.month) return false;
+        return true;
+      });
+      const details: IvaDetail[] = filtered.map(inv => {
+        const base = typeof inv.subtotal === 'number' ? inv.subtotal : parseFloat(inv.subtotal || '0');
+        const iva = typeof inv.tax === 'number' ? inv.tax : parseFloat(inv.tax || '0');
+        const rate = base ? (iva / base) * 100 : 0;
+        return {
+          id: inv.id,
+          date: inv.date,
+          documentNumber: inv.documentNumber,
+          client: inv.client,
+          baseAmount: base,
+          ivaRate: Math.round(rate),
+          ivaAmount: iva,
+        };
+      });
       const totalBase = details.reduce((sum, item) => sum + item.baseAmount, 0);
       const totalIva = details.reduce((sum, item) => sum + item.ivaAmount, 0);
-      
       return {
         summary: [
-          { label: 'Base Gravable', value: `$${totalBase.toLocaleString()}` },
-          { label: 'IVA Generado', value: `$${totalIva.toLocaleString()}` },
-          { label: 'Total', value: `$${(totalBase + totalIva).toLocaleString()}` },
+          { label: 'Base Gravable', value: totalBase },
+          { label: 'IVA Generado', value: totalIva },
+          { label: 'Total', value: totalBase + totalIva },
         ],
         details,
       };
+    } catch (error) {
+      console.error('Error al obtener reporte de IVA:', error);
+      return { summary: [], details: [] };
     }
   },
 
@@ -513,11 +515,37 @@ export const ReportsService = {
   },
 
   /**
+   * Obtener detalles de estado de documentos
+   * @param filters Filtros para el reporte
+   * @returns Detalles del reporte de estado de documentos
+   */
+  getDocumentStatusReport: async (filters: ReportFilters = {}): Promise<{ details: DocumentDetail[] }> => {
+    try {
+      // Obtener facturas filtradas directamente
+      const response = await api.get('/invoices', { params: { limit: '100', ...filters } });
+      const invoices: any[] = response.data?.data || [];
+      const details: DocumentDetail[] = invoices.map(inv => ({
+        id: inv.id,
+        date: inv.issueDate || inv.date,
+        documentNumber: inv.prefix && inv.number ? `${inv.prefix}${inv.number}` : inv.documentNumber || inv.number,
+        client: inv.customer?.name || inv.client || '',
+        type: inv.type || 'invoice',
+        total: typeof inv.total === 'number' ? inv.total : parseFloat(inv.total || '0'),
+        status: inv.status,
+      }));
+      return { details };
+    } catch (error) {
+      console.error('Error al obtener detalles de estado de documentos:', error);
+      return { details: [] };
+    }
+  },
+
+  /**
    * Obtener datos para el reporte de estado de documentos
    * @param filters Filtros para el reporte
    * @returns Datos del reporte de estado de documentos
    */
-  getDocumentStatusReport: async (filters: ReportFilters = {}): Promise<{
+  getDocumentStatusReportSummary: async (filters: ReportFilters = {}): Promise<{
     summary: { status: string; count: number; icon: string; label: string }[];
     details: DocumentDetail[];
   }> => {

@@ -73,10 +73,23 @@ const Table = styled.table`
   th:last-child, td:last-child {
     border-right: none;
   }
+  /* Dark mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    border-color: var(--color-gray-dark);
+    th, td {
+      border-right-color: var(--color-gray-dark);
+      border-bottom-color: var(--color-gray-dark);
+    }
+  }
 `;
 
 const TableHead = styled.thead`
   background-color: var(--color-gray-light);
+  /* Dark mode override for table header */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-dark);
+  }
 `;
 
 const TableRow = styled.tr`
@@ -90,6 +103,10 @@ const TableHeaderCell = styled.th`
   text-align: left;
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
+  /* Dark mode override for table header cell */
+  html[data-theme='dark'] & {
+    color: var(--color-white);
+  }
   border-right: 1px solid var(--color-border);
   &:last-child {
     border-right: none;
@@ -102,6 +119,10 @@ const TableCell = styled.td`
   border-right: 1px solid var(--color-border);
   &:last-child {
     border-right: none;
+  }
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    color: var(--color-white);
   }
 `;
 
@@ -648,6 +669,9 @@ const CreateInvoicePage: React.FC = () => {
                 <SelectButton variant="secondary" size="small" onClick={() => setIsVendorSelectorOpen(true)}>
                   Seleccionar
                 </SelectButton>
+                <Button variant="outline" size="small" onClick={() => navigate('/vendors/create')}>
+                  Crear vendedor
+                </Button>
               </div>
               {invoiceData.vendorId && (
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>

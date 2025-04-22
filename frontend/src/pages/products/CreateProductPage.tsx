@@ -124,10 +124,10 @@ const CreateProductPage: React.FC = () => {
       newErrors.name = 'El nombre es obligatorio';
     }
     
-    if (!formData.price) {
+    if (!formData.price && formData.price !== '0') {
       newErrors.price = 'El precio es obligatorio';
-    } else if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) <= 0) {
-      newErrors.price = 'El precio debe ser un número mayor que cero';
+    } else if (isNaN(parseFloat(formData.price)) || parseFloat(formData.price) < 0) {
+      newErrors.price = 'El precio debe ser un número no negativo';
     }
     
     if (!formData.unit.trim()) {
@@ -135,7 +135,9 @@ const CreateProductPage: React.FC = () => {
     }
     
     if (!formData.taxRateId) {
-      newErrors.taxRateId = 'Debe seleccionar una tasa de impuesto';
+      newErrors.taxRateId = 'Debe ingresar un porcentaje de IVA';
+    } else if (isNaN(parseFloat(formData.taxRateId)) || parseFloat(formData.taxRateId) < 0) {
+      newErrors.taxRateId = 'El porcentaje de IVA debe ser un número no negativo';
     }
     
     setErrors(newErrors);
@@ -186,7 +188,7 @@ const CreateProductPage: React.FC = () => {
         price: parseFloat(formData.price),
         unitPrice: parseFloat(formData.unitPrice || formData.price),
         unit: formData.unit,
-        taxRateId: formData.taxRateId,
+        taxRateId: parseFloat(formData.taxRateId),
         vendorId: vendorId, // Usar el valor explícito
         isActive: formData.isActive,
         companyId: user.company.id
@@ -318,7 +320,7 @@ const CreateProductPage: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Precio del producto"
                   min="0"
-                  step="1000"
+                  step="any"
                   error={errors.price}
                   fullWidth
                 />
@@ -340,23 +342,18 @@ const CreateProductPage: React.FC = () => {
             
             <FormRow>
               <FormGroup>
-                <Label htmlFor="taxRateId">
-                  Tasa de Impuesto *
-                </Label>
-                <Select
+                <Label htmlFor="taxRateId">Porcentaje IVA (%) *</Label>
+                <Input
                   id="taxRateId"
                   name="taxRateId"
+                  type="number"
+                  min="0"
                   value={formData.taxRateId}
                   onChange={handleInputChange}
+                  placeholder="0"
+                  fullWidth
                   error={errors.taxRateId}
-                >
-                  <option value="">Seleccionar tasa de impuesto</option>
-                  {taxRates.map(taxRate => (
-                    <option key={taxRate.id} value={taxRate.id}>
-                      {taxRate.name} ({taxRate.rate}%)
-                    </option>
-                  ))}
-                </Select>
+                />
                 {errors.taxRateId && <ErrorText>{errors.taxRateId}</ErrorText>}
               </FormGroup>
             </FormRow>
@@ -478,6 +475,17 @@ const Select = styled.select<{ error?: string }>`
   background-color: var(--color-white);
   font-size: var(--font-size-sm);
   color: var(--color-text);
+  
+  /* Dark mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    option {
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+  }
   
   &:focus {
     outline: none;

@@ -53,5 +53,5 @@
   "devDependencies": {
     "@types/styled-components": "^5.1.26"
   },
-  "proxy": "http://localhost:3001"
+  "proxy": "http://localhost:3000"
 }

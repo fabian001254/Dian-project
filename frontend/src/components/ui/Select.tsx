@@ -59,6 +59,19 @@ const StyledSelect = styled.select<{ hasError?: boolean; hasLeftIcon?: boolean }
     cursor: not-allowed;
   }
   
+  /* Dark mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    &::placeholder { color: var(--color-text-light); }
+    /* Opciones en dropdown también en tema oscuro */
+    option {
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+  }
+  
   ${props => props.hasError && css`
     border-color: var(--color-error);
     

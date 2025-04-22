@@ -15,7 +15,12 @@ const MainContent = styled.main<{ sidebarOpen: boolean }>`
   margin-left: ${props => props.sidebarOpen ? '250px' : '70px'};
   margin-top: 64px;
   padding: var(--spacing-lg);
-  background-color: var(--color-background);
+  /* Glassmorphism panel background */
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  /* Glassmorphism panel border */
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-xl);
   transition: margin-left var(--transition-normal);
 `;
 

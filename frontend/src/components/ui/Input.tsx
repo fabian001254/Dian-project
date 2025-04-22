@@ -48,6 +48,19 @@ const inputStyles = css<{ hasError?: boolean; hasLeftIcon?: boolean; hasRightIco
   background-color: var(--color-white);
   transition: all var(--transition-fast);
   
+  /* Dark mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    &::placeholder { color: var(--color-text-light); }
+    /* Opciones en dropdown para selects nativos en tema oscuro */
+    option {
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+  }
+
   ${props => props.hasLeftIcon && css`
     padding-left: 40px;
   `}
@@ -84,7 +97,12 @@ const IconContainer = styled.div<{ position: 'left' | 'right' }>`
   align-items: center;
   justify-content: center;
   color: var(--color-gray);
-  
+
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    color: var(--color-white);
+  }
+
   ${props => props.position === 'left' && css`
     left: 12px;
   `}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaFileInvoiceDollar, FaUsers, FaExclamationTriangle, FaBox } from 'react-icons/fa';
+import { FaFileInvoiceDollar, FaUsers, FaExclamationTriangle, FaBoxes } from 'react-icons/fa';
 import axios from 'axios';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -21,22 +21,23 @@ const DashboardGrid = styled.div`
 
 const StatsCard = styled(Card)`
   display: flex;
+  justify-content: space-between;
   align-items: center;
 `;
 
 const IconContainer = styled.div<{ bgColor: string }>`
-  width: 60px;
-  height: 60px;
+  width: var(--spacing-xxl);
+  height: var(--spacing-xxl);
   border-radius: var(--border-radius-circle);
   background-color: ${props => props.bgColor};
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: var(--spacing-md);
+  margin-right: var(--spacing-sm);
   
   svg {
     color: var(--color-white);
-    font-size: 24px;
+    font-size: var(--font-size-lg);
   }
 `;
 
@@ -45,14 +46,14 @@ const StatsInfo = styled.div`
 `;
 
 const StatsValue = styled.div`
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text);
 `;
 
 const StatsLabel = styled.div`
-  font-size: var(--font-size-sm);
-  color: var(--color-gray-dark);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
 `;
 
 const SectionTitle = styled.h2`
@@ -62,7 +63,7 @@ const SectionTitle = styled.h2`
 `;
 
 const TableContainer = styled.div`
-  background-color: var(--color-white);
+  background-color: var(--color-background);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -72,6 +73,8 @@ const TableContainer = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
+  border-spacing: 0;
+  border: 1px solid var(--color-border);
 `;
 
 const TableHead = styled.thead`
@@ -93,11 +96,13 @@ const TableHeaderCell = styled.th`
   text-align: left;
   font-weight: var(--font-weight-medium);
   color: var(--color-text);
+  border: 1px solid var(--color-border);
 `;
 
 const TableCell = styled.td`
   padding: var(--spacing-md);
   color: var(--color-text);
+  border: 1px solid var(--color-border);
 `;
 
 const StatusBadge = styled.span<{ status: string }>`
@@ -108,7 +113,14 @@ const StatusBadge = styled.span<{ status: string }>`
   font-weight: var(--font-weight-medium);
   
   ${props => {
-    switch (props.status) {
+    // Usar uppercase para coincidencias independientemente de formato
+    const key = props.status.toUpperCase();
+    switch (key) {
+      case 'DRAFT':
+        return `
+          background-color: rgba(0, 123, 255, 0.1);
+          color: #007bff;
+        `;
       case 'APPROVED':
         return `
           background-color: rgba(40, 167, 69, 0.1);
@@ -142,7 +154,7 @@ const EmptyState = styled.div`
 interface InvoiceData {
   id: string;
   number: string;
-  date: string;
+  issueDate: string;
   customerName: string;
   total: number;
   status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -184,7 +196,20 @@ const DashboardPage: React.FC = () => {
         }
         
         if (invoicesResponse.data.success) {
-          setRecentInvoices(invoicesResponse.data.data);
+          // Mapear datos y extraer nombre del cliente
+          const mapped: InvoiceData[] = invoicesResponse.data.data.map((inv: any) => ({
+            id: inv.id,
+            number: inv.number,
+            issueDate: inv.issueDate,
+            customerName: inv.customer?.name || '',
+            total: inv.total,
+            status: inv.status,
+          }));
+          // Ordenar y tomar los 5 más recientes
+          const rec = mapped
+            .sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())
+            .slice(0, 5);
+          setRecentInvoices(rec);
         } else {
           console.error('Error en la respuesta de facturas recientes:', invoicesResponse.data);
         }
@@ -215,7 +240,9 @@ const DashboardPage: React.FC = () => {
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
+    // Mapear estado en español independientemente de mayúsculas
+    const key = status.toUpperCase();
+    switch (key) {
       case 'APPROVED':
         return 'Aprobada';
       case 'PENDING':
@@ -274,8 +301,8 @@ const DashboardPage: React.FC = () => {
         </StatsCard>
         
         <StatsCard>
-          <IconContainer bgColor="var(--color-info)">
-            <FaBox />
+          <IconContainer bgColor="var(--color-success)">
+            <FaBoxes />
           </IconContainer>
           <StatsInfo>
             <StatsValue>{stats.totalProducts}</StatsValue>
@@ -302,7 +329,7 @@ const DashboardPage: React.FC = () => {
               recentInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell>{invoice.number}</TableCell>
-                  <TableCell>{formatDate(invoice.date)}</TableCell>
+                  <TableCell>{formatDate(invoice.issueDate)}</TableCell>
                   <TableCell>{invoice.customerName}</TableCell>
                   <TableCell>{formatCurrency(invoice.total)}</TableCell>
                   <TableCell>

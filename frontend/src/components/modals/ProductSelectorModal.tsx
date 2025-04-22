@@ -36,6 +36,20 @@ const ModalOverlay = styled.div`
 
 const ModalContent = styled.div`
   background-color: white;
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    /* Inputs y selects más claros */
+    input, select {
+      background-color: var(--color-gray-light);
+      border-color: var(--color-border);
+      color: var(--color-text);
+    }
+    input::placeholder, select option {
+      color: var(--color-text-light);
+    }
+  }
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-md);
   width: 90%;
@@ -100,6 +114,11 @@ const ProductItem = styled.div`
   border-radius: 16px;
   cursor: pointer;
   background: #fff;
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background: var(--color-background);
+    border-color: var(--color-gray-dark);
+  }
   box-shadow: 0 2px 8px rgba(80, 120, 255, 0.07);
   transition: box-shadow 0.2s, border 0.2s, background 0.2s;
   margin-bottom: 2px;
@@ -331,11 +350,11 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
               <FaUser style={{ color: 'var(--color-primary)' }} />
               <Select
-                label="Cliente"
+                label="Vendedor"
                 value={selectedCustomerId}
                 onChange={handleSelectCustomer}
               >
-                <option value="todos">Todos los clientes</option>
+                <option value="todos">Todos los vendedores</option>
                 <option value="general">Solo productos generales</option>
                 {customers.map(customer => (
                   <option key={customer.id} value={customer.id}>
@@ -377,27 +396,27 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
                     <ProductItem key={product.id} onClick={() => handleSelectProduct(product.id)}>
                       <ProductInfo>
                         <ProductName>
-  <FaPlus style={{ color: 'var(--color-primary)', fontSize: '1.1em' }} />
-  {product.name}
-  {product.customerId
-    ? <Badge color="#1976d2" background="#e3f0fd">Cliente: {product.customerName}</Badge>
-    : <Badge color="#0086b3" background="#e0f7fa">General</Badge>
-  }
-</ProductName>
+                          <FaPlus style={{ color: 'var(--color-primary)', fontSize: '1.1em' }} />
+                          {product.name}
+                          {product.customerId
+                            ? <Badge color="#1976d2" background="#e3f0fd">Vendedor: {product.customerName}</Badge>
+                            : <Badge color="#0086b3" background="#e0f7fa">General</Badge>
+                          }
+                        </ProductName>
                         <ProductDescription>
                           {product.description}
                           {product.customerName && (
-                            <span style={{ 
-                              display: 'inline-block', 
-                              marginLeft: '8px', 
-                              padding: '2px 6px', 
-                              backgroundColor: 'var(--color-primary-light)', 
-                              color: 'var(--color-primary)', 
+                            <span style={{
+                              display: 'inline-block',
+                              marginLeft: '8px',
+                              padding: '2px 6px',
+                              backgroundColor: 'var(--color-primary-light)',
+                              color: 'var(--color-primary)',
                               borderRadius: '4px',
                               fontSize: '0.85em',
                               fontWeight: 'bold'
                             }}>
-                              Cliente: {product.customerName}
+                              Vendedor: {product.customerName}
                             </span>
                           )}
                         </ProductDescription>
@@ -444,27 +463,27 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
                     <ProductItem key={product.id} onClick={() => handleSelectProduct(product.id)}>
                       <ProductInfo>
                         <ProductName>
-  <FaPlus style={{ color: 'var(--color-primary)', fontSize: '1.1em' }} />
-  {product.name}
-  {product.customerId
-    ? <Badge color="#1976d2" background="#e3f0fd">Cliente: {product.customerName}</Badge>
-    : <Badge color="#0086b3" background="#e0f7fa">General</Badge>
-  }
-</ProductName>
+                          <FaPlus style={{ color: 'var(--color-primary)', fontSize: '1.1em' }} />
+                          {product.name}
+                          {product.customerId
+                            ? <Badge color="#1976d2" background="#e3f0fd">Vendedor: {product.customerName}</Badge>
+                            : <Badge color="#0086b3" background="#e0f7fa">General</Badge>
+                          }
+                        </ProductName>
                         <ProductDescription>
                           {product.description}
                           {product.customerName && (
-                            <span style={{ 
-                              display: 'inline-block', 
-                              marginLeft: '8px', 
-                              padding: '2px 6px', 
-                              backgroundColor: 'var(--color-primary-light)', 
-                              color: 'var(--color-primary)', 
+                            <span style={{
+                              display: 'inline-block',
+                              marginLeft: '8px',
+                              padding: '2px 6px',
+                              backgroundColor: 'var(--color-primary-light)',
+                              color: 'var(--color-primary)',
                               borderRadius: '4px',
                               fontSize: '0.85em',
                               fontWeight: 'bold'
                             }}>
-                              Cliente: {product.customerName}
+                              Vendedor: {product.customerName}
                             </span>
                           )}
                         </ProductDescription>

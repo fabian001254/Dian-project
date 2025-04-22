@@ -34,6 +34,16 @@ interface Invoice {
     address: string;
     phone: string;
   };
+  vendor: {
+    firstName: string;
+    lastName: string;
+    identificationType: string;
+    identificationNumber: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+  };
   items: InvoiceItem[];
   subtotal: number;
   taxTotal: number;
@@ -123,6 +133,7 @@ const InvoiceDetailPage: React.FC = () => {
     }
   };
 
+  // Mostrar mientras carga
   if (loading) {
     return (
       <Container>
@@ -131,20 +142,21 @@ const InvoiceDetailPage: React.FC = () => {
     );
   }
 
+  // Manejo de error después de carga
   if (error) {
     return (
       <Container>
         <ErrorMessage>{error}</ErrorMessage>
-        <Button onClick={() => navigate('/invoices')}>Volver a Facturas</Button>
       </Container>
     );
   }
 
+  // Si no se obtuvo invoice
   if (!invoice) {
     return (
       <Container>
         <ErrorMessage>Factura no encontrada</ErrorMessage>
-        <Button onClick={() => navigate('/invoices')}>Volver a Facturas</Button>
+        <Button variant="outline" onClick={() => navigate('/invoices')}>Volver a Facturas</Button>
       </Container>
     );
   }
@@ -178,7 +190,7 @@ const InvoiceDetailPage: React.FC = () => {
       </Header>
 
       <InvoiceGrid>
-        <InvoiceSection>
+        <InvoiceSection style={{ gridColumn: '1 / -1' }}>
           <h3>Información de Factura</h3>
           <InfoGrid>
             <div>
@@ -225,6 +237,38 @@ const InvoiceDetailPage: React.FC = () => {
             </div>
           </InfoGrid>
         </InvoiceSection>
+
+        {invoice.vendor && (
+          <InvoiceSection>
+            <h3>Vendedor</h3>
+            <InfoGrid>
+              <div>
+                <label>Nombre/Razón Social:</label>
+                <span>{invoice.vendor.firstName} {invoice.vendor.lastName}</span>
+              </div>
+              <div>
+                <label>Identificación:</label>
+                <span>{invoice.vendor.identificationType} {invoice.vendor.identificationNumber}</span>
+              </div>
+              <div>
+                <label>Correo electrónico:</label>
+                <span>{invoice.vendor.email}</span>
+              </div>
+              <div>
+                <label>Teléfono:</label>
+                <span>{invoice.vendor.phone}</span>
+              </div>
+              <div>
+                <label>Dirección:</label>
+                <span>{invoice.vendor.address}</span>
+              </div>
+              <div>
+                <label>Ciudad:</label>
+                <span>{invoice.vendor.city}</span>
+              </div>
+            </InfoGrid>
+          </InvoiceSection>
+        )}
       </InvoiceGrid>
 
       <InvoiceSection>
@@ -306,7 +350,7 @@ const Header = styled.div`
   
   h1 {
     margin: 0;
-    color: var(--color-text-primary);
+    color: var(--color-text);
   }
   
   div {
@@ -342,7 +386,9 @@ const InvoiceGrid = styled.div`
 `;
 
 const InvoiceSection = styled.section`
-  background-color: var(--color-white);
+  background-color: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   padding: var(--spacing-md);
@@ -360,21 +406,15 @@ const InfoGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--spacing-md);
-  
-  div {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  
+
   label {
     font-size: var(--font-size-xs);
-    color: var(--color-text-secondary);
+    color: var(--color-text-light);
   }
   
   span {
     font-size: var(--font-size-sm);
-    color: var(--color-text-primary);
+    color: var(--color-text);
     
     &.cufe {
       font-size: var(--font-size-xs);
@@ -396,7 +436,13 @@ const ItemsTable = styled.table`
   th {
     background-color: var(--color-background);
     font-weight: var(--font-weight-medium);
-    color: var(--color-text-secondary);
+    color: var(--color-text-light);
+  }
+  
+  /* Dark mode for header */
+  html[data-theme='dark'] & th {
+    background-color: var(--color-gray-dark);
+    color: var(--color-white);
   }
   
   tbody tr:hover {
@@ -426,7 +472,7 @@ const NotesBox = styled.div`
   padding: var(--spacing-md);
   border-radius: var(--border-radius-sm);
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: var(--color-text-light);
   white-space: pre-line;
 `;
 

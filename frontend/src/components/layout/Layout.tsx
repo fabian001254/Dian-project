@@ -9,6 +9,8 @@ import Header from './Header';
 const LayoutContainer = styled.div`
   display: flex;
   min-height: 100vh;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
 `;
 
 const MainContent = styled.main<{ sidebarOpen: boolean }>`
@@ -16,7 +18,10 @@ const MainContent = styled.main<{ sidebarOpen: boolean }>`
   margin-left: ${props => props.sidebarOpen ? '250px' : '70px'};
   margin-top: 64px;
   padding: var(--spacing-lg);
-  background-color: var(--color-background);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-xl);
   transition: margin-left var(--transition-normal);
 `;
 

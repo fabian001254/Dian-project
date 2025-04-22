@@ -37,6 +37,20 @@ const ModalOverlay = styled.div`
 
 const ModalContent = styled.div`
   background-color: white;
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    /* Inputs, selects y textareas en modal dark mode */
+    input, select, textarea {
+      background-color: var(--color-gray-light);
+      border-color: var(--color-border);
+      color: var(--color-text);
+    }
+    input::placeholder, textarea::placeholder, select option {
+      color: var(--color-text-light);
+    }
+  }
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-md);
   width: 90%;
@@ -103,6 +117,12 @@ const CustomerItem = styled.div`
   border-radius: 12px;
   cursor: pointer;
   background: #fff;
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background: var(--color-background);
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
   box-shadow: 0 2px 8px rgba(80, 120, 255, 0.07);
   transition: box-shadow 0.2s, border 0.2s, background 0.2s;
   margin-bottom: 2px;

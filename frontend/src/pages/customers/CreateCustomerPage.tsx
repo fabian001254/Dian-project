@@ -23,12 +23,15 @@ const CreateCustomerPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
+    businessName: '',
     documentType: 'CC',
     documentNumber: '',
+    dv: '',
     email: '',
     phone: '',
     address: '',
     city: '',
+    department: '',
     notes: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,8 +59,16 @@ const CreateCustomerPage: React.FC = () => {
       newErrors.name = 'El nombre del cliente es obligatorio';
     }
     
+    if (!formData.businessName.trim()) {
+      newErrors.businessName = 'El nombre comercial es obligatorio';
+    }
+    
     if (!formData.documentNumber.trim()) {
       newErrors.documentNumber = 'El número de documento es obligatorio';
+    }
+    
+    if (formData.documentType === 'NIT' && !formData.dv.trim()) {
+      newErrors.dv = 'El dígito de verificación (DV) es obligatorio para NIT';
     }
     
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
@@ -86,15 +97,17 @@ const CreateCustomerPage: React.FC = () => {
       // Mapear los nombres de campos para que coincidan con lo que espera el controlador
       const customerData = {
         name: formData.name,
-        identificationType: formData.documentType, // Usar identificationType en lugar de documentType
-        identificationNumber: formData.documentNumber, // Usar identificationNumber en lugar de documentNumber
+        businessName: formData.businessName,
+        identificationType: formData.documentType,
+        identificationNumber: formData.documentNumber,
+        dv: formData.dv,
         email: formData.email || 'info@example.com',
         phone: formData.phone || '',
         address: formData.address || 'Sin dirección',
-        city: formData.city || 'Bogotá',
-        department: 'Cundinamarca',
+        city: formData.city || '',
+        department: formData.department || '',
         companyId: user.company.id,
-        type: 'natural', // Tipo de cliente por defecto
+        type: 'natural',
         isActive: true
       };
       
@@ -190,6 +203,22 @@ const CreateCustomerPage: React.FC = () => {
             
             <FormRow>
               <FormGroup>
+                <Label htmlFor="businessName">Nombre Comercial *</Label>
+                <Input
+                  id="businessName"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleInputChange}
+                  placeholder="Nombre comercial"
+                  error={errors.businessName}
+                  fullWidth
+                />
+                {errors.businessName && <ErrorText>{errors.businessName}</ErrorText>}
+              </FormGroup>
+            </FormRow>
+            
+            <FormRow>
+              <FormGroup>
                 <Label htmlFor="documentType">Tipo de Documento *</Label>
                 <Select
                   id="documentType"
@@ -218,6 +247,22 @@ const CreateCustomerPage: React.FC = () => {
                 />
                 {errors.documentNumber && <ErrorText>{errors.documentNumber}</ErrorText>}
               </FormGroup>
+              
+              {formData.documentType === 'NIT' && (
+                <FormGroup>
+                  <Label htmlFor="dv">Dígito de Verificación (DV) *</Label>
+                  <Input
+                    id="dv"
+                    name="dv"
+                    value={formData.dv}
+                    onChange={handleInputChange}
+                    placeholder="Dígito de verificación"
+                    error={errors.dv}
+                    fullWidth
+                  />
+                  {errors.dv && <ErrorText>{errors.dv}</ErrorText>}
+                </FormGroup>
+              )}
             </FormRow>
           </FormSection>
           
@@ -274,6 +319,20 @@ const CreateCustomerPage: React.FC = () => {
                   value={formData.city}
                   onChange={handleInputChange}
                   placeholder="Ciudad"
+                  fullWidth
+                />
+              </FormGroup>
+            </FormRow>
+            
+            <FormRow>
+              <FormGroup>
+                <Label htmlFor="department">Departamento</Label>
+                <Input
+                  id="department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleInputChange}
+                  placeholder="Departamento"
                   fullWidth
                 />
               </FormGroup>
@@ -339,10 +398,16 @@ const SectionTitle = styled.h2`
 `;
 
 const FormRow = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: var(--spacing-md);
+  display: grid; 
+  /* 2 inputs por línea en pantallas grandes */
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
+  
+  /* En móviles, volver a una columna */
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const FormGroup = styled.div`
@@ -366,6 +431,18 @@ const Select = styled.select<{ error?: string }>`
   background-color: var(--color-white);
   font-size: var(--font-size-sm);
   color: var(--color-text);
+  
+  /* Dark mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border-color: var(--color-border);
+    color: var(--color-text);
+    /* Dark options styling */
+    option {
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+  }
   
   &:focus {
     outline: none;

@@ -17,7 +17,13 @@ const HeaderContainer = styled.header<{ sidebarOpen: boolean }>`
   right: 0;
   left: ${props => props.sidebarOpen ? '250px' : '70px'};
   height: 64px;
-  background-color: var(--color-white);
+  /* Glass background */
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  /* Texto e iconos segun tema */
+  color: var(--color-text);
+  /* Optional border bottom for separation */
+  border-bottom: 1px solid var(--glass-border);
   box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
@@ -111,11 +117,15 @@ const UserMenu = styled.div`
   top: 45px;
   right: 0;
   width: 200px;
-  background-color: var(--color-white);
-  border-radius: var(--border-radius-md);
-  box-shadow: var(--shadow-md);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
   z-index: 100;
   overflow: hidden;
+  /* texto y iconos acorde al tema */
+  color: var(--color-text);
 `;
 
 const UserMenuItem = styled.div`

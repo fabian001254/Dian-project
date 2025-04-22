@@ -76,12 +76,12 @@ const ButtonStyled = styled.button<ButtonProps>`
     color: var(--color-white);
     
     &:hover, &:focus {
-      background-color: #e55a29;
+      background-color: var(--color-accent-hover);
       box-shadow: var(--shadow-md);
     }
     
     &:active {
-      background-color: #d04d1f;
+      background-color: var(--color-accent-active);
     }
   `}
   

@@ -66,6 +66,15 @@ const SearchInput = styled.div`
   display: flex;
   align-items: center;
   background-color: var(--color-white);
+  /* Dark-mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border: 1px solid var(--color-white);
+    input {
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+  }
   border: 1px solid var(--color-border);
   border-radius: var(--border-radius-md);
   padding: 0 var(--spacing-sm);
@@ -102,6 +111,13 @@ const FilterButton = styled.button`
   cursor: pointer;
   transition: all var(--transition-normal);
 
+  /* Dark mode */
+  html[data-theme='dark'] & {
+    background-color: var(--color-gray-light);
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
+
   &:hover {
     background-color: var(--color-background);
   }
@@ -112,21 +128,35 @@ const FilterButton = styled.button`
 `;
 
 const FilterPanel = styled.div`
+  position: absolute;
+  top: calc(var(--spacing-lg) + 2rem);
+  right: var(--spacing-lg);
   background-color: var(--color-white);
   border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--spacing-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 320px;
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  backdrop-filter: blur(10px);
   overflow: hidden;
   position: relative;
   z-index: 10;
+
+  /* Dark-mode override */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    border-color: var(--color-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
 `;
 
 const FilterHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
   background: linear-gradient(to right, var(--color-primary-light), var(--color-bg-secondary));
   border-bottom: 1px solid var(--color-border);
   
@@ -158,9 +188,12 @@ const CloseButton = styled.button`
 `;
 
 const FilterBody = styled.div`
-  padding: var(--spacing-md);
-  max-height: 400px;
+  padding: var(--spacing-sm) 0;
+  max-height: 300px;
   overflow-y: auto;
+  /* Custom scrollbar */
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 `;
 
 const FilterSection = styled.div`
@@ -168,10 +201,16 @@ const FilterSection = styled.div`
 `;
 
 const FilterSectionTitle = styled.h4`
-  margin: 0 0 var(--spacing-sm) 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-light);
-  font-weight: var(--font-weight-medium);
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-bold);
+  /* Dark mode */
+  html[data-theme='dark'] & {
+    color: var(--color-text);
+  }
 `;
 
 const FilterOption = styled.div<{ active: boolean }>`
@@ -179,7 +218,7 @@ const FilterOption = styled.div<{ active: boolean }>`
   cursor: pointer;
   border-radius: var(--border-radius-sm);
   background-color: ${props => props.active ? 'var(--color-primary-light)' : 'transparent'};
-  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text)'};
+  color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text-light)'};
   display: flex;
   align-items: center;
   transition: all 0.2s ease;
@@ -188,8 +227,16 @@ const FilterOption = styled.div<{ active: boolean }>`
   
   &:hover {
     background-color: ${props => props.active ? 'var(--color-primary-light)' : 'var(--color-bg-hover)'};
-    border-color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-border)'};
     transform: translateX(2px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  /* Dark mode */
+  html[data-theme='dark'] & {
+    background-color: ${props => props.active ? 'rgba(var(--color-primary-rgb),0.2)' : 'transparent'};
+    color: ${props => props.active ? 'var(--color-primary)' : 'var(--color-text)'};
+    &:hover {
+      background-color: ${props => props.active ? 'rgba(var(--color-primary-rgb),0.3)' : 'var(--color-bg-hover)'};
+    }
   }
 `;
 
@@ -220,7 +267,7 @@ const EmptyFilterState = styled.div`
 
 const FilterActions = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-md);
   padding-top: var(--spacing-md);
@@ -276,6 +323,17 @@ const ProductsTable = styled.table`
   width: 100%;
   border-collapse: collapse;
   background-color: var(--color-white);
+  /* Dark-mode overrides */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    th, td {
+      border-bottom-color: var(--color-border);
+    }
+    th {
+      background-color: var(--color-bg-secondary);
+      color: var(--color-text);
+    }
+  }
   border-radius: var(--border-radius-md);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

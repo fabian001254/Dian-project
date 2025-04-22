@@ -5,13 +5,15 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import SectionLoader from '../ui/SectionLoader';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface Vendor {
   id: string;
-  firstName: string;
-  lastName: string;
-  email?: string;
-  role?: string;
+  name: string;
+  user?: {
+    identificationType: string;
+    identificationNumber: string;
+  };
 }
 
 interface VendorSelectorModalProps {
@@ -29,6 +31,20 @@ const ModalOverlay = styled.div`
 `;
 const ModalContent = styled.div`
   background: white; border-radius: var(--border-radius-md);
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    /* Inputs y selects en modal */
+    input, select, textarea {
+      background-color: var(--color-gray-light);
+      border-color: var(--color-border);
+      color: var(--color-text);
+    }
+    input::placeholder, textarea::placeholder, select option {
+      color: var(--color-text-light);
+    }
+  }
   box-shadow: var(--shadow-md); width: 90%; max-width: 600px;
   max-height: 90vh; display: flex; flex-direction: column;
   overflow: hidden;
@@ -71,6 +87,12 @@ const VendorItem = styled.div`
   border-radius: var(--border-radius-md);
   cursor: pointer;
   background: #fff;
+  /* Dark mode override */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+    border-color: var(--color-border);
+    color: var(--color-text);
+  }
   box-shadow: 0 2px 8px rgba(80, 120, 255, 0.07);
   transition: box-shadow 0.2s, border 0.2s, background 0.2s;
   margin-bottom: 2px;
@@ -106,6 +128,7 @@ const NoResults = styled.div`
 const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
   isOpen, onClose, onSelectVendor, initialVendorId
 }) => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [filtered, setFiltered] = useState<Vendor[]>([]);
@@ -115,8 +138,7 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
   useEffect(() => {
     setFiltered(search.trim()?
       vendors.filter(v => 
-        v.firstName.toLowerCase().includes(search.toLowerCase()) ||
-        v.lastName.toLowerCase().includes(search.toLowerCase())
+        v.name.toLowerCase().includes(search.toLowerCase())
       ) : vendors
     );
   }, [search, vendors]);
@@ -124,11 +146,10 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
   const loadVendors = async () => {
     setLoading(true);
     try {
-      const resp = await axios.get('/api/users/role?role=vendor');
-      const list = (resp.data.data || resp.data) as Vendor[];
-      const filteredList = list.filter(u => u.role === 'vendor');
-      setVendors(filteredList);
-      setFiltered(filteredList);
+      const resp = await axios.get('/api/vendors');
+      const list = (resp.data.data || []) as Vendor[];
+      setVendors(list);
+      setFiltered(list);
     } catch(e) { console.error(e); setVendors([]); setFiltered([]); }
     finally { setLoading(false); }
   };
@@ -139,6 +160,9 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
       <ModalContent>
         <ModalHeader>
           <ModalTitle>Seleccionar Vendedor</ModalTitle>
+          <Button variant="outline" size="small" onClick={() => { onClose(); navigate('/vendors/create'); }}>
+            Nuevo Vendedor
+          </Button>
           <CloseButton onClick={onClose}><FaTimes/></CloseButton>
         </ModalHeader>
         <ModalBody>
@@ -153,9 +177,10 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
                 {filtered.map(v=> (
                   <VendorItem key={v.id} onClick={()=>select(v.id)} style={v.id===initialVendorId?{borderColor:'var(--color-primary)', backgroundColor:'#f0f7ff'}:{}}>
                     <VendorInfo>
-                      <VendorName><FaUserTie style={{color:'var(--color-primary)', fontSize:'1em'}}/> {v.firstName} {v.lastName}</VendorName>
+                      <VendorName><FaUserTie style={{color:'var(--color-primary)', fontSize:'1em'}}/> {v.name}</VendorName>
                       <VendorDetails>
-                        ID: {v.id}{v.email?` • ${v.email}`:''}
+                        ID: {v.id}
+                        {v.user ? ` • ${v.user.identificationType} ${v.user.identificationNumber}` : ''}
                       </VendorDetails>
                     </VendorInfo>
                     <Button size="small" variant="primary" onClick={e=>{e.stopPropagation();select(v.id);}}>Seleccionar</Button>

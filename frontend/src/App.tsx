@@ -25,6 +25,16 @@ import CreateProductPage from './pages/products/CreateProductPage';
 import EditProductPage from './pages/products/EditProductPage';
 import HabilitacionPage from './pages/habilitacion/HabilitacionPage';
 import ProfilePage from './pages/profile/ProfilePage';
+import VendorListPage from './pages/vendors/VendorListPage';
+import CreateVendorPage from './pages/vendors/CreateVendorPage';
+import VendorDetailPage from './pages/vendors/VendorDetailPage';
+import EditVendorPage from './pages/vendors/EditVendorPage';
+
+// Certificate Pages
+import { CertificatesPage, CertificateSimulator, CertificateConfigPage, CertificateDetailPage } from './pages/certificates';
+
+// Report Pages
+import { ReportsDashboardPage, IvaReportPage, SalesByPeriodPage, DocumentStatusPage } from './pages/reports';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -90,10 +100,6 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="customers" element={<CustomerListPage />} />
-            <Route path="customers/create" element={<CreateCustomerPage />} />
-            <Route path="customers/:id/edit" element={<EditCustomerPage />} />
-            {/* Ruta principal de productos */}
           </Route>
           
           {/* Protected Routes with Standard Layout (sidebar + content) */}
@@ -107,7 +113,16 @@ const App: React.FC = () => {
             <Route path="invoices/create" element={<CreateInvoicePage />} />
             <Route path="invoices/:id" element={<InvoiceDetailPage />} />
             
-            {/* Rutas principales */}
+            {/* Customer Routes */}
+            <Route path="customers" element={<CustomerListPage />} />
+            <Route path="customers/create" element={<CreateCustomerPage />} />
+            <Route path="customers/:id/edit" element={<EditCustomerPage />} />
+            
+            {/* Vendor Routes */}
+            <Route path="vendors" element={<VendorListPage />} />
+            <Route path="vendors/create" element={<CreateVendorPage />} />
+            <Route path="vendors/:id" element={<VendorDetailPage />} />
+            <Route path="vendors/:id/edit" element={<EditVendorPage />} />
             
             {/* Product Routes */}
             <Route path="products" element={<ProductListPage />} />
@@ -116,6 +131,18 @@ const App: React.FC = () => {
             
             {/* Habilitación Routes */}
             <Route path="habilitacion" element={<HabilitacionPage />} />
+            
+            {/* Certificate Routes */}
+            <Route path="certificates" element={<CertificatesPage />} />
+            <Route path="certificates/simulator" element={<CertificateSimulator />} />
+            <Route path="certificates/config" element={<CertificateConfigPage />} />
+            <Route path="certificates/:id" element={<CertificateDetailPage />} />
+            
+            {/* Report Routes */}
+            <Route path="reports" element={<ReportsDashboardPage />} />
+            <Route path="reports/tax/iva" element={<IvaReportPage />} />
+            <Route path="reports/sales/period" element={<SalesByPeriodPage />} />
+            <Route path="reports/documents/status" element={<DocumentStatusPage />} />
             
             {/* Profile Routes */}
             <Route path="profile" element={<ProfilePage />} />

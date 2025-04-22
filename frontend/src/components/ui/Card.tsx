@@ -12,8 +12,10 @@ interface CardProps {
 }
 
 const CardContainer = styled.div<Omit<CardProps, 'children' | 'title' | 'subtitle'>>`
-  background-color: var(--color-white);
-  border-radius: var(--border-radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius-xl);
   overflow: hidden;
   
   ${props => props.bordered && css`

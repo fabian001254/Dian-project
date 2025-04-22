@@ -38,7 +38,7 @@ const FilterContainer = styled.div`
 
 const TableContainer = styled.div`
   overflow-x: auto;
-  background-color: var(--color-white);
+  background-color: var(--color-background);
   border-radius: var(--border-radius-md);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--spacing-lg);
@@ -250,10 +250,9 @@ const InvoiceListPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [creatorFilter, setCreatorFilter] = useState('');
-  
+  const [dateFilter, setDateFilter] = useState<string>('');
+  const [creatorFilter, setCreatorFilter] = useState<string>('');
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -293,7 +292,8 @@ const InvoiceListPage: React.FC = () => {
           ? `/api/invoices/customer/${customerIdParam}`
           : '/api/invoices';
         const response = await axios.get(url);
-        const invoicesData = response.data;
+        // Usar el array de facturas dentro del objeto data
+        const invoicesData = response.data.data;
         
         if (Array.isArray(invoicesData)) {
           setInvoices(invoicesData);
@@ -330,7 +330,7 @@ const InvoiceListPage: React.FC = () => {
   }, [customerIdParam]);
   
   useEffect(() => {
-    // Aplicar filtros cuando cambia el término de búsqueda, filtro de estado o filtro de fecha
+    // Aplicar filtros cuando cambia el término de búsqueda, filtro de fecha o filtro de creador
     let result = [...invoices];
     
     if (searchTerm) {
@@ -340,10 +340,6 @@ const InvoiceListPage: React.FC = () => {
         invoice.customer.name.toLowerCase().includes(term) ||
         invoice.prefix.toLowerCase().includes(term)
       );
-    }
-    
-    if (statusFilter) {
-      result = result.filter(invoice => invoice.status === statusFilter);
     }
     
     if (dateFilter) {
@@ -360,7 +356,7 @@ const InvoiceListPage: React.FC = () => {
     setInvoicesByCustomer(groupInvoicesByCustomer(result));
     setTotalPages(Math.ceil(result.length / itemsPerPage));
     setCurrentPage(1); // Reiniciar a la primera página cuando cambian los filtros
-  }, [searchTerm, statusFilter, dateFilter, creatorFilter, invoices, itemsPerPage]);
+  }, [searchTerm, dateFilter, creatorFilter, invoices, itemsPerPage]);
   
   const handleCreateInvoice = () => {
     navigate('/invoices/create');
@@ -494,6 +490,24 @@ const InvoiceListPage: React.FC = () => {
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentInvoices = filteredInvoices.slice(indexOfFirstItem, indexOfLastItem);
 
+  const handleSearchInvoices = () => {
+    let results = invoices;
+    if (searchTerm) {
+      results = results.filter(inv =>
+        inv.number.includes(searchTerm) ||
+        inv.customer.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    if (dateFilter) {
+      results = results.filter(inv => inv.issueDate.startsWith(dateFilter));
+    }
+    if (creatorFilter) {
+      results = results.filter(inv => inv.createdBy === creatorFilter);
+    }
+    setFilteredInvoices(results);
+    setInvoicesByCustomer(groupInvoicesByCustomer(results));
+  };
+
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '300px' }}>
@@ -527,39 +541,23 @@ const InvoiceListPage: React.FC = () => {
       <Card>
         <SearchContainer>
           <Input
-            placeholder="Buscar por número o cliente"
+            placeholder="Buscar por número o cliente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            leftIcon={<FaSearch />}
-            fullWidth
           />
+          <Button variant="primary" size="small" onClick={handleSearchInvoices}>
+            <FaSearch /> Buscar
+          </Button>
         </SearchContainer>
 
         <FilterContainer>
-          <Select
-            label="Estado"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            leftIcon={<FaFilter />}
-          >
-            <option value="">Todos los estados</option>
-            <option value="DRAFT">Borrador</option>
-            <option value="PENDING">Pendiente</option>
-            <option value="APPROVED">Aprobada</option>
-            <option value="REJECTED">Rechazada</option>
-            <option value="CANCELLED">Cancelada</option>
-          </Select>
-
           <Input
-            label="Fecha"
             type="month"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
           />
-
           {creators.length > 0 && (
             <Select
-              label="Creado por"
               value={creatorFilter}
               onChange={(e) => setCreatorFilter(e.target.value)}
             >
@@ -571,6 +569,9 @@ const InvoiceListPage: React.FC = () => {
               ))}
             </Select>
           )}
+          <Button variant="outline" size="small" onClick={handleSearchInvoices}>
+            <FaFilter /> Filtrar
+          </Button>
         </FilterContainer>
 
         {Object.keys(invoicesByCustomer).length > 0 ? (

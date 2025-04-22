@@ -1,14 +1,19 @@
 import axios from 'axios';
 
 // Crear una instancia de axios con la configuración base
+// Usamos una URL absoluta para asegurarnos de que las solicitudes vayan al servidor backend
+// independientemente de dónde se esté ejecutando el frontend
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3001/api',
+  baseURL: 'http://localhost:3000/api',  // URL absoluta al backend
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
+
+// Log para depuración
+console.log('API configurada con baseURL:', api.defaults.baseURL);
 
 // Interceptor para agregar el token a todas las solicitudes
 api.interceptors.request.use(

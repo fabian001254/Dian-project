@@ -8,6 +8,7 @@ import {
   FaBoxes, 
   FaCertificate, 
   FaChartBar, 
+  FaUserTie,
   FaCog,
   FaBook,
   FaQuestionCircle
@@ -24,8 +25,15 @@ const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   top: 0;
   bottom: 0;
   width: ${props => props.isOpen ? '250px' : '70px'};
-  background-color: var(--color-primary);
-  color: var(--color-white);
+  /* Background del sidebar según tema */
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  color: var(--color-text);
+  /* Transition suave al cambiar tema */
+  transition: background var(--transition-normal), color var(--transition-normal), border-color var(--transition-normal);
+  border-top-right-radius: var(--border-radius-xl);
+  border-bottom-right-radius: var(--border-radius-xl);
   transition: width var(--transition-normal);
   z-index: 100;
   box-shadow: var(--shadow-lg);
@@ -38,14 +46,14 @@ const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--glass-border);
 `;
 
 const Logo = styled.div<{ isOpen: boolean }>`
   font-family: var(--font-family-heading);
   font-weight: var(--font-weight-bold);
   font-size: ${props => props.isOpen ? 'var(--font-size-lg)' : 'var(--font-size-md)'};
-  color: var(--color-white);
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -69,24 +77,24 @@ const MenuLink = styled(NavLinkWrapper)<{ isOpen: boolean }>`
   align-items: center;
   padding: ${props => props.isOpen ? '10px 16px' : '10px 0'};
   justify-content: ${props => props.isOpen ? 'flex-start' : 'center'};
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--color-text);
   transition: all var(--transition-fast);
   border-left: 3px solid transparent;
   
   &:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--color-white);
+    background-color: var(--glass-bg);
+    color: var(--color-text);
   }
   
   &.active {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--color-white);
+    background-color: var(--glass-border);
+    color: var(--color-text);
     border-left-color: var(--color-accent);
   }
   
   svg {
     font-size: 18px;
-    min-width: ${props => props.isOpen ? '24px' : '70px'};
+    width: 24px;
   }
 `;
 
@@ -101,7 +109,7 @@ const SectionTitle = styled.div<{ isOpen: boolean }>`
   padding: ${props => props.isOpen ? '8px 16px' : '8px 0'};
   font-size: var(--font-size-xs);
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-gray);
   margin-top: var(--spacing-md);
   white-space: nowrap;
   opacity: ${props => props.isOpen ? 1 : 0};
@@ -116,6 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
     { path: '/dashboard', icon: <FaHome />, text: 'Inicio' },
     { path: '/invoices', icon: <FaFileInvoiceDollar />, text: 'Facturación' },
     { path: '/customers', icon: <FaUsers />, text: 'Clientes' },
+    { path: '/vendors', icon: <FaUserTie />, text: 'Vendedores' },
     { path: '/products', icon: <FaBoxes />, text: 'Productos' },
     { path: '/certificates', icon: <FaCertificate />, text: 'Certificados' },
     { path: '/reports', icon: <FaChartBar />, text: 'Reportes' },

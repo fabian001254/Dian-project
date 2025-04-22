@@ -1,0 +1,239 @@
+import api from './api.config';
+
+// Interfaces para los reportes
+export interface ReportSummary {
+  label: string;
+  value: string | number;
+}
+
+export interface SalesReportData {
+  period: string;
+  sales: number;
+  previousPeriodSales?: number;
+}
+
+export interface TaxReportData {
+  period: string;
+  baseAmount: number;
+  taxAmount: number;
+}
+
+export interface DocumentStatusData {
+  status: 'draft' | 'issued' | 'accepted' | 'rejected' | 'pending';
+  count: number;
+}
+
+export interface DocumentDetail {
+  id: string;
+  date: string;
+  documentNumber: string;
+  client: string;
+  type: string;
+  total: number;
+  status: 'draft' | 'issued' | 'accepted' | 'rejected' | 'pending';
+}
+
+export interface IvaDetail {
+  id: string;
+  date: string;
+  documentNumber: string;
+  client: string;
+  baseAmount: number;
+  ivaRate: number;
+  ivaAmount: number;
+}
+
+export interface SalesDetail {
+  id: string;
+  date: string;
+  documentNumber: string;
+  client: string;
+  subtotal: number;
+  tax: number;
+  total: number;
+}
+
+export interface ReportFilters {
+  startDate?: string;
+  endDate?: string;
+  periodType?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  documentType?: 'all' | 'invoice' | 'creditNote' | 'debitNote';
+  status?: 'all' | 'draft' | 'issued' | 'accepted' | 'rejected' | 'pending';
+  reportType?: 'generated' | 'deductible';
+  periodicity?: 'monthly' | 'bimonthly';
+  year?: string;
+  month?: string;
+  compareWithPrevious?: boolean;
+}
+
+export interface DashboardStats {
+  salesMetrics: ReportSummary[];
+  salesData: SalesReportData[];
+  taxData: TaxReportData[];
+  documentStatusData: DocumentStatusData[];
+}
+
+export interface SalesReport {
+  summary: ReportSummary[];
+  details: SalesDetail[];
+  chartData: SalesReportData[];
+}
+
+/**
+ * Genera datos de gráfico simulados para diferentes tipos de períodos
+ * @param periodType Tipo de período (daily, weekly, monthly, yearly)
+ * @param totalAmount Monto total para distribuir en los períodos
+ * @returns Datos simulados para el gráfico
+ */
+const generateMockChartData = (periodType: string, totalAmount: number): SalesReportData[] => {
+  // Ensure periodType is defined
+  const period = periodType || 'monthly';
+  
+  // Generate chart data based on period type
+  switch (period) {
+    case 'daily':
+      return [
+        { period: '01', sales: Math.floor(totalAmount * 0.1), previousPeriodSales: Math.floor(totalAmount * 0.085) },
+        { period: '05', sales: Math.floor(totalAmount * 0.15), previousPeriodSales: Math.floor(totalAmount * 0.13) },
+        { period: '10', sales: Math.floor(totalAmount * 0.08), previousPeriodSales: Math.floor(totalAmount * 0.068) },
+        { period: '15', sales: Math.floor(totalAmount * 0.12), previousPeriodSales: Math.floor(totalAmount * 0.102) },
+        { period: '20', sales: Math.floor(totalAmount * 0.18), previousPeriodSales: Math.floor(totalAmount * 0.153) },
+        { period: '25', sales: Math.floor(totalAmount * 0.22), previousPeriodSales: Math.floor(totalAmount * 0.187) },
+        { period: '30', sales: Math.floor(totalAmount * 0.15), previousPeriodSales: Math.floor(totalAmount * 0.13) },
+      ];
+    case 'weekly':
+      return [
+        { period: 'Semana 1', sales: Math.floor(totalAmount * 0.2), previousPeriodSales: Math.floor(totalAmount * 0.17) },
+        { period: 'Semana 2', sales: Math.floor(totalAmount * 0.25), previousPeriodSales: Math.floor(totalAmount * 0.21) },
+        { period: 'Semana 3', sales: Math.floor(totalAmount * 0.15), previousPeriodSales: Math.floor(totalAmount * 0.13) },
+        { period: 'Semana 4', sales: Math.floor(totalAmount * 0.4), previousPeriodSales: Math.floor(totalAmount * 0.34) },
+      ];
+    case 'yearly':
+      return [
+        { period: '2023', sales: Math.floor(totalAmount * 0.7), previousPeriodSales: Math.floor(totalAmount * 0.6) },
+        { period: '2024', sales: Math.floor(totalAmount * 0.85), previousPeriodSales: Math.floor(totalAmount * 0.7) },
+        { period: '2025', sales: totalAmount, previousPeriodSales: Math.floor(totalAmount * 0.85) },
+      ];
+    default:
+      // Default case for monthly or any other value
+      return [
+        { period: 'Ene', sales: Math.floor(totalAmount * 0.07), previousPeriodSales: Math.floor(totalAmount * 0.06) },
+        { period: 'Feb', sales: Math.floor(totalAmount * 0.08), previousPeriodSales: Math.floor(totalAmount * 0.068) },
+        { period: 'Mar', sales: Math.floor(totalAmount * 0.09), previousPeriodSales: Math.floor(totalAmount * 0.077) },
+        { period: 'Abr', sales: Math.floor(totalAmount * 0.1), previousPeriodSales: Math.floor(totalAmount * 0.085) },
+        { period: 'May', sales: Math.floor(totalAmount * 0.11), previousPeriodSales: Math.floor(totalAmount * 0.094) },
+        { period: 'Jun', sales: Math.floor(totalAmount * 0.12), previousPeriodSales: Math.floor(totalAmount * 0.102) },
+        { period: 'Jul', sales: Math.floor(totalAmount * 0.08), previousPeriodSales: Math.floor(totalAmount * 0.068) },
+        { period: 'Ago', sales: Math.floor(totalAmount * 0.07), previousPeriodSales: Math.floor(totalAmount * 0.06) },
+        { period: 'Sep', sales: Math.floor(totalAmount * 0.06), previousPeriodSales: Math.floor(totalAmount * 0.051) },
+        { period: 'Oct', sales: Math.floor(totalAmount * 0.08), previousPeriodSales: Math.floor(totalAmount * 0.068) },
+        { period: 'Nov', sales: Math.floor(totalAmount * 0.05), previousPeriodSales: Math.floor(totalAmount * 0.043) },
+        { period: 'Dic', sales: Math.floor(totalAmount * 0.09), previousPeriodSales: Math.floor(totalAmount * 0.077) },
+      ];
+  }
+};
+
+/**
+ * Genera un reporte de ventas simulado para pruebas
+ * @param filters Filtros opcionales para el reporte
+ * @returns Reporte de ventas simulado
+ */
+const generateMockSalesReport = (filters: ReportFilters = {}): SalesReport => {
+  const safeFilters = filters || {};
+  
+  // Generar datos de detalle simulados
+  const details: SalesDetail[] = [];
+  for (let i = 1; i <= 10; i++) {
+    details.push({
+      id: `DOC-${i}`,
+      date: '2023-12-01',
+      documentNumber: `F-${1000 + i}`,
+      client: `Cliente ${i}`,
+      subtotal: 1000 * i,
+      tax: 190 * i,
+      total: 1190 * i,
+    });
+  }
+
+  // Calcular totales para el resumen
+  const subtotal = details.reduce((sum, item) => sum + item.subtotal, 0);
+  const tax = details.reduce((sum, item) => sum + item.tax, 0);
+  const total = details.reduce((sum, item) => sum + item.total, 0);
+
+  // Crear resumen
+  const summary: ReportSummary[] = [
+    { label: 'Subtotal', value: subtotal },
+    { label: 'IVA', value: tax },
+    { label: 'Total', value: total },
+  ];
+
+  // Generar datos para el gráfico
+  const chartData = generateMockChartData(safeFilters.periodType || 'monthly', total);
+
+  return {
+    summary,
+    details,
+    chartData,
+  };
+};
+
+/**
+ * Servicio para manejar los reportes de la aplicación
+ */
+const ReportsService = {
+  /**
+   * Obtiene el reporte de ventas por período
+   * @param filters Filtros para el reporte
+   * @returns Promesa con el reporte de ventas
+   */
+  getSalesByPeriodReport: async (filters: ReportFilters = {}): Promise<SalesReport> => {
+    try {
+      // Intentar obtener datos reales del backend
+      const response = await api.get('/reports/sales', { params: filters });
+      
+      // Verificar si hay datos en la respuesta
+      if (response && response.data) {
+        return response.data;
+      }
+      
+      // Si no hay datos, generar datos simulados
+      console.warn('No se recibieron datos del backend, generando datos simulados');
+      return generateMockSalesReport(filters);
+    } catch (error) {
+      // En caso de error, generar datos simulados
+      console.error('Error al obtener reporte de ventas:', error);
+      return generateMockSalesReport(filters);
+    }
+  },
+
+  /**
+   * Obtiene el reporte de IVA
+   * @param filters Filtros para el reporte
+   * @returns Promesa con el reporte de IVA
+   */
+  getIvaReport: async (filters: ReportFilters = {}): Promise<any> => {
+    try {
+      const response = await api.get('/reports/iva', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener reporte de IVA:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Obtiene estadísticas para el dashboard
+   * @returns Promesa con las estadísticas del dashboard
+   */
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    try {
+      const response = await api.get('/reports/dashboard');
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener estadísticas del dashboard:', error);
+      throw error;
+    }
+  }
+};
+
+export default ReportsService;

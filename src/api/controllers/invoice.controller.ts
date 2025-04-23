@@ -37,8 +37,20 @@ export class InvoiceController {
         return res.status(400).json({ success: false, message: 'El campo vendorId es obligatorio' });
       }
       console.log('Using invoiceData.vendorId:', vendorId);
+
+      // Convertir vendorId (tabla vendors) a userId
+      const vendorRepo = AppDataSource.getRepository(Vendor);
+      const vendorEntity = await vendorRepo.findOne({ where: { id: vendorId } });
+      if (!vendorEntity) {
+        return res.status(404).json({ success: false, message: 'Vendedor no encontrado' });
+      }
+      if (!vendorEntity.userId) {
+        return res.status(400).json({ success: false, message: 'Vendedor sin userId asociado' });
+      }
+      invoiceData.vendorId = vendorEntity.userId;
+
       // Impedir que el vendedor se compre su propio item
-      if ((req as any).user?.role === 'vendor' && (req as any).user.id === vendorId) {
+      if ((req as any).user?.role === 'vendor' && (req as any).user.id === invoiceData.vendorId) {
         return res.status(403).json({ success: false, message: 'No puedes comprar tu propio producto' });
       }
       // Asignar empresa del usuario autenticado

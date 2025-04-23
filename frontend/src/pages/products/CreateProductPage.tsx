@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import { FaInfoCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
+import VendorSelectorModal from '../../components/modals/VendorSelectorModal';
 
 // Interfaces
 interface TaxRate {
@@ -24,8 +25,9 @@ const CreateProductPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [taxRates, setTaxRates] = useState<TaxRate[]>([]);
-  const [vendors, setVendors] = useState<Array<{id:string, firstName:string, lastName:string}>>([]);
+  const [vendors, setVendors] = useState<Array<{id: string; name: string;}>>([]);
   const [loadingVendors, setLoadingVendors] = useState(false);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
   
   // Obtener el ID del vendedor de los parámetros de consulta (si existe)
   const queryParams = new URLSearchParams(location.search);
@@ -62,22 +64,13 @@ const CreateProductPage: React.FC = () => {
           }
         }
         
-        // Cargar vendedores
+        // Cargar vendedores reales
         setLoadingVendors(true);
-        const vendorsResponse = await axios.get('/api/users', { params: { role: 'vendor' } });
-        if (vendorsResponse.data && vendorsResponse.data.success) {
-          setVendors(vendorsResponse.data.data);
-          
-          // Si hay un vendedor preseleccionado desde la URL, verificar que exista
-          if (vendorIdFromUrl) {
-            const vendorExists = vendorsResponse.data.data.some(
-              (vendor: {id: string}) => vendor.id === vendorIdFromUrl
-            );
-            
-            if (!vendorExists) {
-              console.warn(`El vendedor con ID ${vendorIdFromUrl} no existe. Se usará la selección predeterminada.`);
-            }
-          }
+        const vendorsResp = await axios.get('/api/vendors');
+        if (vendorsResp.data && vendorsResp.data.success) {
+          // Mapear solo id y name
+          const list = (vendorsResp.data.data as any[]).map(v => ({ id: v.id, name: v.name }));
+          setVendors(list);
         }
       } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
@@ -360,31 +353,39 @@ const CreateProductPage: React.FC = () => {
 
             <FormRow>
               <FormGroup>
-                <Label htmlFor="vendorId">
-                  Vendedor (Opcional)
-                </Label>
-                <Select
-                  id="vendorId"
-                  name="vendorId"
-                  value={formData.vendorId}
-                  onChange={handleInputChange}
-                  error={errors.vendorId}
-                >
-                  <option value="">Producto general (todos los vendedores)</option>
-                  {vendors.map(vendor => (
-                    <option key={vendor.id} value={vendor.id}>
-                      {vendor.firstName} {vendor.lastName}
-                    </option>
-                  ))}
-                </Select>
-                {formData.vendorId && (
-                  <div style={{ marginTop: 'var(--spacing-xs)', padding: 'var(--spacing-xs)', backgroundColor: 'var(--color-primary-light)', borderRadius: 'var(--border-radius-sm)' }}>
-                    <strong>Producto asociado a vendedor específico:</strong> {vendors.find(v => v.id === formData.vendorId)?.firstName} {vendors.find(v => v.id === formData.vendorId)?.lastName || 'Vendedor seleccionado'}
-                  </div>
-                )}
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-secondary)', marginTop: 'var(--spacing-xs)' }}>
-                  Si asocia el producto a un vendedor específico, solo será visible en las facturas de ese vendedor.
+                <Label>Vendedor (Opcional)</Label>
+                <div style={{ position: 'relative' }}>
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setVendorModalOpen(true)}
+                    disabled={loadingVendors}
+                    fullWidth
+                  >
+                    {formData.vendorId
+                      ? `Vendedor: ${vendors.find(v => v.id === formData.vendorId)?.name}`
+                      : 'Seleccionar Vendedor (Opcional)'}
+                  </Button>
+                  {formData.vendorId && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, vendorId: '' }))}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--color-danger)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
+                {errors.vendorId && <ErrorText>{errors.vendorId}</ErrorText>}
               </FormGroup>
             </FormRow>
           </FormSection>
@@ -420,6 +421,15 @@ const CreateProductPage: React.FC = () => {
           </ActionButtons>
         </form>
       </Card>
+      <VendorSelectorModal
+        isOpen={vendorModalOpen}
+        onClose={() => setVendorModalOpen(false)}
+        onSelectVendor={(id: string) => {
+          setFormData(prev => ({ ...prev, vendorId: id }));
+          setVendorModalOpen(false);
+        }}
+        initialVendorId={formData.vendorId}
+      />
     </>
   );
 };

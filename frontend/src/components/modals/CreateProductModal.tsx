@@ -5,6 +5,7 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
 import axios from 'axios';
+import VendorSelectorModal from './VendorSelectorModal';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -129,6 +130,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
     price?: string;
     vendorId?: string;
   }>({});
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -273,30 +275,20 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
             </FormGroup>
             
             <FormGroup>
-              <Select
-                label="Vendedor *"
-                name="vendorId"
-                value={formData.vendorId}
-                onChange={handleChange}
-                error={errors.vendorId}
-                fullWidth
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setVendorModalOpen(true)}
                 disabled={loadingVendors || !!vendorId}
+                fullWidth
               >
-                <option value="">Seleccione un vendedor</option>
-                {vendors.map(v => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </Select>
-              {vendorId && (
-                <div style={{ marginTop: '5px', fontSize: '0.9em', color: 'var(--color-primary)' }}>
-                  Este producto se asociará específicamente al vendedor seleccionado.
-                  {vendors.find(v => v.id === vendorId) && (
-                    <div style={{ fontWeight: 'bold', marginTop: '3px' }}>
-                      Vendedor: {vendors.find(v => v.id === vendorId)?.name}
-                    </div>
-                  )}
+                {formData.vendorId
+                  ? `Vendedor: ${vendors.find(v => v.id === formData.vendorId)?.name || 'Cargando...'}`
+                  : 'Seleccionar Vendedor *'}
+              </Button>
+              {errors.vendorId && (
+                <div style={{ marginTop: '5px', fontSize: '0.9em', color: 'var(--color-danger)' }}>
+                  {errors.vendorId}
                 </div>
               )}
             </FormGroup>
@@ -319,6 +311,15 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
           </form>
         </ModalBody>
       </ModalContent>
+      <VendorSelectorModal
+        isOpen={vendorModalOpen}
+        onClose={() => setVendorModalOpen(false)}
+        onSelectVendor={(id: string) => {
+          setFormData(prev => ({ ...prev, vendorId: id }));
+          setVendorModalOpen(false);
+        }}
+        initialVendorId={formData.vendorId}
+      />
     </ModalOverlay>
   );
 };

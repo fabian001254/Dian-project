@@ -321,43 +321,26 @@ export class ProductController {
             relations: ['user'] // Cargar la relación con el usuario
           });
           
+          console.log('Vendor encontrado completo:', JSON.stringify(vendor, null, 2));
+          
           console.log('Vendedor encontrado:', vendor);
           
-          // Guardar la información del vendedor en la descripción para referencia
+          // Verificar si el vendedor tiene un userId asociado
           if (vendor) {
-            // Construir el nombre del vendedor correctamente
-            const vendorName = vendor.user ? 
-              `${vendor.user.firstName || ''} ${vendor.user.lastName || ''}`.trim() : 
-              (vendor.name || 'Vendedor sin nombre');
-              
-            const vendorInfo = `\n\nVendedor: ${vendorName} (ID: ${vendorId})`;
-            product.description = description ? `${description}${vendorInfo}` : vendorInfo;
-            
-            // Si el vendedor tiene userId, lo asignamos
-            if (vendor.userId) {
-              product.vendorId = vendor.userId;
-              console.log(`Asignando vendorId: ${product.vendorId} (userId del vendedor)`);
-            } else {
-              console.log('El vendedor no tiene userId asociado, omitiendo vendorId');
-              // En lugar de eliminar la propiedad, la establecemos como undefined para evitar el error de clave foránea
-              // TypeScript no permite eliminar propiedades no opcionales
-              product.vendorId = undefined as any;
-            }
+            // Asignar el userId del vendedor al producto (ya que vendorId en Product se relaciona con User)
+            product.vendorId = vendor.userId;
+            console.log(`Asignando vendorId: ${product.vendorId} (userId del vendedor)`);
           } else {
             console.log('No se encontró el vendedor con ID:', vendorId);
-            product.description = description || '';
-            // En lugar de eliminar la propiedad, la establecemos como undefined
             product.vendorId = undefined as any;
           }
         } catch (error) {
           console.error('Error al buscar el vendedor:', error);
-          product.description = description || '';
-          // En lugar de eliminar la propiedad, la establecemos como undefined
+          // En caso de error, no podemos asignar el vendorId
           product.vendorId = undefined as any;
         }
       } else {
-        product.description = description || '';
-        // En lugar de eliminar la propiedad, la establecemos como undefined
+        // Si no se proporciona vendorId, lo establecemos como undefined
         product.vendorId = undefined as any;
       }
       

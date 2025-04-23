@@ -535,6 +535,8 @@ const ProductListPage: React.FC = () => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [showFullList, setShowFullList] = useState(true);
   const [showCustomerFilter, setShowCustomerFilter] = useState(false);
+  const [vendors, setVendors] = useState<{ id: string; name: string; userId: string | null }[]>([]);
+  const [loadingVendors, setLoadingVendors] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -558,6 +560,24 @@ const ProductListPage: React.FC = () => {
   }, [user]);
 
   useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setLoadingVendors(true);
+        if (!user?.company?.id) return;
+        const response = await axios.get('/api/vendors', {
+          params: { companyId: user.company.id }
+        });
+        if (response.data.success) setVendors(response.data.data);
+      } catch (err) {
+        console.error('Error al cargar los vendedores:', err);
+      } finally {
+        setLoadingVendors(false);
+      }
+    };
+    fetchVendors();
+  }, [user]);
+
+  useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -577,13 +597,16 @@ const ProductListPage: React.FC = () => {
         });
         
         if (response.data.success) {
-          // Procesar los productos para extraer información del vendedor de la descripción
           const processedProducts = response.data.data.map((product: any) => {
-            const vendorInfo = extractVendorInfo(product.description);
+            // Normalizar vendorId para detectar valores vacíos
+            const rawVendorId = typeof product.vendorId === 'string' ? product.vendorId.trim() : '';
+            const vendorEntry = vendors.find(v => v.userId === rawVendorId);
+            const vendorName = rawVendorId
+              ? (vendorEntry ? vendorEntry.name : 'Nombre no disponible')
+              : null;
             return {
               ...product,
-              vendorName: vendorInfo.name,
-              vendorId: vendorInfo.id
+              vendorName
             };
           });
           
@@ -598,26 +621,8 @@ const ProductListPage: React.FC = () => {
       }
     };
     
-    // Función para extraer la información del vendedor de la descripción
-    const extractVendorInfo = (description: string | undefined) => {
-      if (!description) return { name: null, id: null };
-      
-      // Buscar el patrón "Vendedor: [Nombre] (ID: [ID])"
-      const vendorRegex = /Vendedor:\s+([^(]+)\s+\(ID:\s+([^)]+)\)/i;
-      const match = description.match(vendorRegex);
-      
-      if (match && match.length >= 3) {
-        return {
-          name: match[1].trim(),
-          id: match[2].trim()
-        };
-      }
-      
-      return { name: null, id: null };
-    };
-
     fetchProducts();
-  }, [user, selectedCustomerId]);
+  }, [user, selectedCustomerId, vendors]);
 
   const handleDelete = async (id: string) => {
     // Usar SweetAlert2 para la confirmación

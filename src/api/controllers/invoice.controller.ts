@@ -363,20 +363,16 @@ export class InvoiceController {
   };
 
   /**
-   * Obtiene todas las facturas de un vendedor
+   * Obtiene todas las facturas de un vendedor (por userId)
    */
   public getVendorInvoices = async (req: Request, res: Response): Promise<Response> => {
-    // Obtener facturas del vendor mediante su userId
     const { vendorId } = req.params;
     try {
-      const vendorRepo = AppDataSource.getRepository(Vendor);
-      const vendor = await vendorRepo.findOne({ where: { id: vendorId } });
-      if (!vendor || !vendor.userId) {
-        return res.status(404).json({ success: false, message: 'Vendedor no encontrado o sin userId' });
-      }
-      const userId = vendor.userId;
+      // Filtrar facturas por ID de usuario del vendor
+      const userId = vendorId;
       const invoiceRepository = AppDataSource.getRepository(Invoice);
-      const invoices = await invoiceRepository.createQueryBuilder('invoice')
+      const invoices = await invoiceRepository
+        .createQueryBuilder('invoice')
         .leftJoinAndSelect('invoice.customer', 'customer')
         .leftJoinAndSelect('invoice.items', 'items')
         .where('invoice.vendorId = :userId', { userId })

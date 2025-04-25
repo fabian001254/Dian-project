@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaFileInvoiceDollar, FaUsers, FaExclamationTriangle, FaBoxes } from 'react-icons/fa';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
-import { useAuth } from '../../context/AuthContext';
 
 // Contenedor principal del dashboard
 const DashboardContainer = styled.div`
@@ -187,7 +187,12 @@ const DashboardPage: React.FC = () => {
         
         // Obtener estadísticas del dashboard y facturas recientes
         const statsResponse = await axios.get('/api/dashboard/stats');
-        const invoicesResponse = await axios.get('/api/invoices/recent');
+        // Si es vendor, obtener solo sus facturas; si no, las recientes generales
+        const invoicesResponse = await axios.get(
+          user?.role === 'vendor'
+            ? `/api/invoices/vendor/${user.id}`
+            : '/api/invoices/recent'
+        );
         
         if (statsResponse.data.success) {
           setStats(statsResponse.data.data);

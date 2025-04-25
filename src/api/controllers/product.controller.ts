@@ -115,7 +115,7 @@ export class ProductController {
    */
   public getAllProducts = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const { companyId, customerId } = req.query;
+      const { companyId, customerId, vendorId } = req.query;
       const productRepository = AppDataSource.getRepository(Product);
       const taxRateRepository = AppDataSource.getRepository('tax_rates');
       const customerRepository = customerId ? AppDataSource.getRepository('customers') : null;
@@ -128,8 +128,18 @@ export class ProductController {
         whereCondition.companyId = companyId as string;
       }
       
-      // Filtrar por cliente si se proporciona
-      if (customerId) {
+      // Filtrar por vendedor si se proporciona
+      if (vendorId) {
+        console.log(`Filtrando productos para vendedor ID: ${vendorId}`);
+        products = await productRepository
+          .createQueryBuilder('product')
+          .leftJoinAndSelect('product.taxRates', 'taxRates')
+          .leftJoinAndSelect('product.company', 'company')
+          .leftJoinAndSelect('product.customer', 'customer')
+          .where('product.vendorId = :vendorId', { vendorId })
+          .andWhere('product.companyId = :companyId', { companyId })
+          .getMany();
+      } else if (customerId) {
         // Verificar si es el caso especial de "general"
         if (customerId === 'general' || customerId === 'none') {
           console.log('Filtrando productos generales (sin cliente específico)');

@@ -129,6 +129,7 @@ export class AuthController {
         .leftJoinAndSelect('user.company', 'company')
         .where('user.email = :email', { email })
         .getOne();
+      console.log('[Auth] login: retrieved user for email', email, '=>', user);
       
       if (!user) {
         res.status(401).json({
@@ -149,6 +150,7 @@ export class AuthController {
       
       // Verificar la contraseña
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log('[Auth] login: password compare result =>', isPasswordValid);
       
       if (!isPasswordValid) {
         res.status(401).json({

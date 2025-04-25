@@ -9,6 +9,7 @@ import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import SectionLoader from '../../components/ui/SectionLoader';
+import { useAuth } from '../../context/AuthContext';
 
 const PageHeader = styled.div`
   display: flex;
@@ -241,6 +242,7 @@ interface Invoice {
 
 const InvoiceListPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const customerIdParam = searchParams.get('customerId');
   
@@ -290,7 +292,9 @@ const InvoiceListPage: React.FC = () => {
         // Obtener las facturas del servidor (podemos filtrar por cliente)
         const url = customerIdParam
           ? `/api/invoices/customer/${customerIdParam}`
-          : '/api/invoices';
+          : user?.role === 'vendor'
+            ? `/api/invoices/vendor/${user.id}`
+            : '/api/invoices';
         const response = await axios.get(url);
         // Usar el array de facturas dentro del objeto data
         const invoicesData = response.data.data;
@@ -327,7 +331,7 @@ const InvoiceListPage: React.FC = () => {
     };
 
     fetchInvoices();
-  }, [customerIdParam]);
+  }, [customerIdParam, user]);
   
   useEffect(() => {
     // Aplicar filtros cuando cambia el término de búsqueda, filtro de fecha o filtro de creador

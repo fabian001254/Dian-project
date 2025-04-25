@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { NavLink, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { 
   FaHome, 
   FaFileInvoiceDollar, 
@@ -117,6 +118,7 @@ const SectionTitle = styled.div<{ isOpen: boolean }>`
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
   const location = useLocation();
+  const { user } = useAuth();
   
   const menuItems = [
     { path: '/dashboard', icon: <FaHome />, text: 'Inicio' },
@@ -141,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
       </SidebarHeader>
       
       <MenuList>
-        {menuItems.map((item) => (
+        {menuItems.filter(item => !(user?.role === 'vendor' && item.text === 'Vendedores')).map((item) => (
           <MenuItem key={item.path}>
             <MenuLink 
               to={item.path} 

@@ -11,8 +11,24 @@ FROM node:18-alpine
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --production
+
+# Copiar los archivos compilados
 COPY --from=builder /app/dist ./dist
-# Note: compiled seed script lives in dist/src
+
+# Copiar los scripts de inicio
+COPY railway-start.js ./railway-start.js
+COPY server.js ./server.js
+
+# Crear directorio para datos persistentes
+RUN mkdir -p /data
+VOLUME ["/data"]
+
+# Healthcheck para verificar que la aplicación esté funcionando
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-10000}/api/health || exit 1
+
 # Expose port and start
 EXPOSE ${PORT:-10000}
-CMD ["node", "dist/index.js"]
+
+# Usar el script de inicio de Railway
+CMD ["node", "railway-start.js"]

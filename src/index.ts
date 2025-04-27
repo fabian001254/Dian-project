@@ -10,7 +10,8 @@ import * as fs from 'fs';
 
 // Initialize express app
 const app = express();
-const PORT = process.env.PORT || 3001;
+// Render asigna PORT=10000 por defecto, pero usamos el valor de la variable de entorno
+const PORT = parseInt(process.env.PORT || '10000', 10);
 
 // Logging de peticiones HTTP
 app.use(morgan('dev'));
@@ -46,14 +47,15 @@ const startServer = async () => {
     await AppDataSource.initialize();
     console.log('💶 Database connected successfully');
 
-    // Iniciar el servidor DESPUÉS de conectar a la base de datos
-    const server = app.listen(Number(PORT), () => {
+    // Iniciar el servidor DESPUÉS de conectar a la base de datos - FORMA SIMPLIFICADA PARA RENDER
+    console.log(`Intentando iniciar servidor en el puerto ${PORT}`);
+    
+    // Usar la forma más simple posible de app.listen para Render
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📝 DIAN Facturación Electrónica - Sistema Educativo`);
-      // Usar 0.0.0.0 en los logs para entornos de producción como Render
-      const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
-      console.log(`🌐 Accede a la aplicación en: http://${host}:${PORT}`);
-      console.log(`📚 Documentación API: http://${host}:${PORT}/api-docs`);
+      console.log(`🌐 Accede a la aplicación en: http://localhost:${PORT}`);
+      console.log(`📚 Documentación API: http://localhost:${PORT}/api-docs`);
     });
     
     // Configurar timeouts para mantener conexiones vivas (recomendado por Render)

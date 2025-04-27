@@ -1,1 +1,1 @@
-web: npm run seed && npm start
+web: npm run railway-start

@@ -10,7 +10,8 @@
     "dev-with-proxy": "concurrently \"npm run dev\" \"npm run proxy\"",
     "seed": "node dist/ensure-data.js",
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "railway-start": "node railway-start.js"
   },
   "keywords": [
     "facturacion",

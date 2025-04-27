@@ -32,9 +32,15 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
-// Ruta de healthcheck para Railway
+// Ruta de healthcheck para Railway - DEBE ESTAR DISPONIBLE INMEDIATAMENTE
+// Esta ruta debe responder antes de que se inicialice la base de datos
 app.get('/api/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Sistema funcionando correctamente' });
+  // Siempre responder con 200 para que el healthcheck pase
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'Servidor disponible', 
+    time: new Date().toISOString() 
+  });
 });
 
 // API routes

@@ -1,34 +1,26 @@
-# Stage 1: Build
-FROM node:18-alpine AS builder
+FROM node:18-alpine
+
+# Crear directorio de trabajo
 WORKDIR /app
+
+# Copiar package.json y package-lock.json
 COPY package.json package-lock.json* ./
-RUN npm install --production=false
+
+# Instalar dependencias
+RUN npm install
+
+# Copiar el código fuente
 COPY . .
+
+# Compilar TypeScript
 RUN npm run build
 
-# Stage 2: Runtime
-FROM node:18-alpine
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install --production
-
-# Copiar los archivos compilados
-COPY --from=builder /app/dist ./dist
-
-# Copiar los scripts de inicio
-COPY railway-start.js ./railway-start.js
-COPY server.js ./server.js
-
 # Crear directorio para datos persistentes
+# Railway recomienda usar sus volúmenes en lugar de la directiva VOLUME
 RUN mkdir -p /data
-VOLUME ["/data"]
 
-# Healthcheck para verificar que la aplicación esté funcionando
-HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-10000}/api/health || exit 1
+# Exponer el puerto
+EXPOSE 10000
 
-# Expose port and start
-EXPOSE ${PORT:-10000}
-
-# Usar el script de inicio de Railway
-CMD ["node", "railway-start.js"]
+# Iniciar la aplicación
+CMD ["npm", "start"]

@@ -1,11 +1,20 @@
 # Ignore dependencies
 node_modules
+
 # Exclude frontend to compile only backend
 frontend
-# Ignore build outputs
-dist
-# Ignore SQLite file
+
+# NO ignorar la carpeta dist que contiene los archivos compilados
+# dist
+
+# Ignore SQLite file (se usará un volumen para persistencia)
 database.sqlite
+
 # Logs and env
 *.log
 .env
+
+# Git y otros archivos innecesarios
+.git
+.github
+.vscode

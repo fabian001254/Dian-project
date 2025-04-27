@@ -10,7 +10,7 @@ import * as fs from 'fs';
 
 // Initialize express app
 const app = express();
-const PORT = process.env.PORT || 3001; // Aseguramos que sea un número más adelante
+const PORT = process.env.PORT || 3001;
 
 // Logging de peticiones HTTP
 app.use(morgan('dev'));
@@ -44,17 +44,25 @@ const startServer = async () => {
   try {
     // Connect to database
     await AppDataSource.initialize();
-    console.log('📦 Database connected successfully');
+    console.log('💶 Database connected successfully');
 
-    // ***MOVER ESTO AQUÍ: Iniciar el servidor DESPUÉS de conectar a la base de datos***
-    const server = app.listen(Number(PORT), '0.0.0.0', () => {
+    // Iniciar el servidor DESPUÉS de conectar a la base de datos
+    const server = app.listen(Number(PORT), () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📝 DIAN Facturación Electrónica - Sistema Educativo`);
-      console.log(`🌐 Accede a la aplicación en: http://localhost:${PORT}`);
-      console.log(`📚 Documentación API: http://localhost:${PORT}/api-docs`); // Agregado
+      // Usar 0.0.0.0 en los logs para entornos de producción como Render
+      const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+      console.log(`🌐 Accede a la aplicación en: http://${host}:${PORT}`);
+      console.log(`📚 Documentación API: http://${host}:${PORT}/api-docs`);
     });
+    
+    // Configurar timeouts para mantener conexiones vivas (recomendado por Render)
+    server.keepAliveTimeout = 120 * 1000;
+    server.headersTimeout = 120 * 1000;
 
-    // Seed database if it's a new installation
+    // Verificar si la base de datos ya existe
+    // Nota: En Render, esto puede no funcionar como se espera ya que el sistema de archivos
+    // puede ser efímero. La lógica principal de inicialización debe estar en ensure-data.ts
     const dbPath = path.join(__dirname, '../database.sqlite');
     const dbExists = fs.existsSync(dbPath);
     if (!dbExists) {
@@ -62,9 +70,9 @@ const startServer = async () => {
       await seedDatabase();
     }
 
-
   } catch (error) {
     console.error('❌ Error starting server:', error);
+    process.exit(1); // Salir con código de error para que Render pueda reiniciar el servicio
   }
 };
 

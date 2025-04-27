@@ -15,6 +15,25 @@ export const seedDatabase = async (): Promise<void> => {
   try {
     console.log('🌱 Iniciando proceso de seed de la base de datos...');
     
+    // Verificar si ya existen empresas
+    const companyRepository = AppDataSource.getRepository(Company);
+    const companyCount = await companyRepository.count();
+    
+    // Verificar si ya existen usuarios
+    const userRepository = AppDataSource.getRepository(User);
+    const userCount = await userRepository.count();
+    
+    console.log(` Empresas existentes: ${companyCount}`);
+    console.log(` Usuarios existentes: ${userCount}`);
+    
+    if (companyCount > 0 || userCount > 0) {
+      console.log(' Ya existen datos en la base de datos. No se crearán datos iniciales.');
+      console.log('✅ Proceso de seed completado (datos ya existentes)');
+      return;
+    }
+    
+    console.log(' No se encontraron datos. Creando datos iniciales...');
+    
     // Create first company
     const company1 = new Company();
     company1.name = 'Empresa Ejemplo S.A.S';
@@ -35,7 +54,7 @@ export const seedDatabase = async (): Promise<void> => {
     company1.authorizationRangeFrom = 1;
     company1.authorizationRangeTo = 5000;
     
-    await AppDataSource.manager.save(company1);
+    await companyRepository.save(company1);
     console.log('✅ Empresa 1 creada');
     
     // Create second company

@@ -47,6 +47,12 @@ function runSeedAndStartApp() {
     process.env.DATABASE_PATH = '/data/database.sqlite';
     console.log(`💾 Usando base de datos en: ${process.env.DATABASE_PATH}`);
     
+    // Asegurarnos de que la aplicación principal use el mismo puerto que el healthcheck
+    // para evitar el problema de puerto 0
+    const mainPort = process.env.PORT || 10000;
+    process.env.PORT = mainPort;
+    console.log(`📱 Configurando puerto para la aplicación principal: ${mainPort}`);
+    
     // Ejecutar el seed de forma sincrónica
     require('./dist/ensure-data');
     console.log('✅ Seed completado correctamente');

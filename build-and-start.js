@@ -243,7 +243,44 @@ async function buildAndStart() {
       console.error('❌ Error durante el seed:', error);
     }
     
-    // 5. Iniciar el servidor principal
+    // 5. Verificar una última vez que los archivos estáticos estén disponibles
+    const frontendBuildDir = path.join(__dirname, 'frontend/build');
+    const frontendPublicDir = path.join(__dirname, 'frontend/public');
+    const distDir = path.join(__dirname, 'dist');
+    
+    console.log('\n📂 Verificando directorios antes de iniciar el servidor principal:');
+    console.log(`- __dirname: ${__dirname}`);
+    console.log(`- frontend/build existe: ${fs.existsSync(frontendBuildDir)}`);
+    console.log(`- frontend/public existe: ${fs.existsSync(frontendPublicDir)}`);
+    console.log(`- dist existe: ${fs.existsSync(distDir)}`);
+    
+    if (fs.existsSync(frontendBuildDir)) {
+      console.log('Contenido de frontend/build:');
+      console.log(fs.readdirSync(frontendBuildDir));
+      
+      // Asegurarse de que el index.html exista en el directorio build
+      const indexPath = path.join(frontendBuildDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        console.log('✅ index.html encontrado en frontend/build');
+      } else {
+        console.log('⚠️ index.html NO encontrado en frontend/build');
+      }
+    }
+    
+    if (fs.existsSync(frontendPublicDir)) {
+      console.log('Contenido de frontend/public:');
+      console.log(fs.readdirSync(frontendPublicDir));
+      
+      // Asegurarse de que el index.html exista en el directorio public
+      const indexPath = path.join(frontendPublicDir, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        console.log('✅ index.html encontrado en frontend/public');
+      } else {
+        console.log('⚠️ index.html NO encontrado en frontend/public');
+      }
+    }
+    
+    // 6. Iniciar el servidor principal
     console.log('🚀 Iniciando el servidor principal...');
     server.close(() => {
       console.log('🔄 Cerrando servidor temporal para iniciar el principal');

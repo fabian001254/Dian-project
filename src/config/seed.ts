@@ -1,4 +1,4 @@
-import { getConnection } from 'typeorm';
+import { AppDataSource } from './database';
 import bcrypt from 'bcryptjs';
 import { User, UserRole } from '../models/User';
 import { Company } from '../models/Company';
@@ -35,7 +35,7 @@ export const seedDatabase = async (): Promise<void> => {
     company1.authorizationRangeFrom = 1;
     company1.authorizationRangeTo = 5000;
     
-    await getConnection().manager.save(company1);
+    await AppDataSource.manager.save(company1);
     console.log('✅ Empresa 1 creada');
     
     // Create second company
@@ -53,7 +53,7 @@ export const seedDatabase = async (): Promise<void> => {
     company2.taxRegime = 'Régimen Común';
     company2.isAuthorized = false;
     
-    await getConnection().manager.save(company2);
+    await AppDataSource.manager.save(company2);
     console.log('✅ Empresa 2 creada');
     
     // Create admin user
@@ -65,7 +65,7 @@ export const seedDatabase = async (): Promise<void> => {
     adminUser.role = UserRole.ADMIN;
     adminUser.companyId = company1.id;
     
-    await getConnection().manager.save(adminUser);
+    await AppDataSource.manager.save(adminUser);
     console.log('✅ Usuario administrador creado');
 
     // Crear usuarios vendor
@@ -76,7 +76,7 @@ export const seedDatabase = async (): Promise<void> => {
     vendorUser1.password = await bcrypt.hash('vendor123', 10);
     vendorUser1.role = UserRole.VENDOR;
     vendorUser1.companyId = company1.id;
-    await getConnection().manager.save(vendorUser1);
+    await AppDataSource.manager.save(vendorUser1);
     console.log('✅ Usuario vendor1 creado');
     const vendorUser2 = new User();
     vendorUser2.firstName = 'Vendor';
@@ -85,11 +85,11 @@ export const seedDatabase = async (): Promise<void> => {
     vendorUser2.password = await bcrypt.hash('vendor456', 10);
     vendorUser2.role = UserRole.VENDOR;
     vendorUser2.companyId = company1.id;
-    await getConnection().manager.save(vendorUser2);
+    await AppDataSource.manager.save(vendorUser2);
     console.log('✅ Usuario vendor2 creado');
     
     // Seed vendors table from vendorUsers
-    const vendorRepo = getConnection().manager.getRepository(Vendor);
+    const vendorRepo = AppDataSource.manager.getRepository(Vendor);
     const vendorEntity1 = new Vendor();
     vendorEntity1.name = `${vendorUser1.firstName} ${vendorUser1.lastName}`;
     vendorEntity1.address = '';
@@ -142,7 +142,7 @@ export const seedDatabase = async (): Promise<void> => {
     for (const taxRateData of taxRates) {
       const taxRate = new TaxRate();
       Object.assign(taxRate, taxRateData);
-      await getConnection().manager.save(taxRate);
+      await AppDataSource.manager.save(taxRate);
     }
     console.log('✅ Tasas de impuestos creadas');
     
@@ -180,7 +180,7 @@ export const seedDatabase = async (): Promise<void> => {
     for (const customerData of customers) {
       const customer = new Customer();
       Object.assign(customer, customerData);
-      await getConnection().manager.save(customer);
+      await AppDataSource.manager.save(customer);
     }
     console.log('✅ Clientes creados');
     
@@ -215,7 +215,7 @@ export const seedDatabase = async (): Promise<void> => {
     for (const productData of products) {
       const product = new Product();
       Object.assign(product, productData);
-      await getConnection().manager.save(product);
+      await AppDataSource.manager.save(product);
     }
     console.log('✅ Productos creados');
     
@@ -234,7 +234,7 @@ export const seedDatabase = async (): Promise<void> => {
     certificate.isDefault = true;
     certificate.companyId = company1.id;
     
-    await getConnection().manager.save(certificate);
+    await AppDataSource.manager.save(certificate);
     console.log('✅ Certificado digital simulado creado');
     
     console.log('✅ Proceso de seed completado con éxito');

@@ -4,15 +4,17 @@
   "description": "Sistema educativo de facturación electrónica que simula el cumplimiento con la normativa DIAN colombiana",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node start.js",
+    "start": "node build-and-start.js",
     "start-original": "node dist/index.js",
+    "start-simple": "node start.js",
     "dev": "ts-node-dev --respawn src/index.ts",
     "proxy": "ts-node-dev --respawn src/proxy-server.ts",
     "dev-with-proxy": "concurrently \"npm run dev\" \"npm run proxy\"",
     "seed": "node dist/ensure-data.js",
     "build": "tsc",
     "test": "jest",
-    "railway-start": "node railway-start.js"
+    "railway-start": "node railway-start.js",
+    "full-start": "node build-and-start.js"
   },
   "keywords": [
     "facturacion",

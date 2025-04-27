@@ -10,6 +10,12 @@ const FRONTEND_DIR = path.join(__dirname, 'frontend');
 const FRONTEND_BUILD_DIR = path.join(FRONTEND_DIR, 'build');
 const FRONTEND_PUBLIC_DIR = path.join(__dirname, 'frontend/public');
 
+// Log de rutas para depuración
+console.log('Rutas de directorios:');
+console.log(`- FRONTEND_DIR: ${FRONTEND_DIR}`);
+console.log(`- FRONTEND_BUILD_DIR: ${FRONTEND_BUILD_DIR}`);
+console.log(`- FRONTEND_PUBLIC_DIR: ${FRONTEND_PUBLIC_DIR}`);
+
 // Crear un servidor express simple para el healthcheck mientras compilamos
 const app = express();
 

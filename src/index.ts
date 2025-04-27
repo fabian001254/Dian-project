@@ -30,7 +30,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files
-app.use(express.static(path.join(__dirname, '../frontend/public')));
+// Primero intentamos servir desde el directorio build (producción)
+const buildPath = path.join(__dirname, '../frontend/build');
+const publicPath = path.join(__dirname, '../frontend/public');
+
+// Verificar qué directorio existe y usarlo
+if (fs.existsSync(buildPath)) {
+  console.log(`📁 Sirviendo archivos estáticos desde: ${buildPath}`);
+  app.use(express.static(buildPath));
+} else if (fs.existsSync(publicPath)) {
+  console.log(`📁 Sirviendo archivos estáticos desde: ${publicPath}`);
+  app.use(express.static(publicPath));
+} else {
+  console.warn('⚠️ No se encontró ningún directorio de archivos estáticos');
+}
 
 // Ruta de healthcheck para Railway - DEBE ESTAR DISPONIBLE INMEDIATAMENTE
 // Esta ruta debe responder antes de que se inicialice la base de datos
@@ -48,7 +61,17 @@ app.use('/api', apiRoutes);
 
 // Serve React app for any other route
 app.get('*', (_req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/public/index.html'));
+  // Intentar servir index.html desde el directorio build o public
+  const buildIndexPath = path.join(__dirname, '../frontend/build/index.html');
+  const publicIndexPath = path.join(__dirname, '../frontend/public/index.html');
+  
+  if (fs.existsSync(buildIndexPath)) {
+    res.sendFile(buildIndexPath);
+  } else if (fs.existsSync(publicIndexPath)) {
+    res.sendFile(publicIndexPath);
+  } else {
+    res.status(404).send('No se encontró la aplicación frontend');
+  }
 });
 
 // Database connection and server start

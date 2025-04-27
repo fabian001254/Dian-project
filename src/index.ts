@@ -16,8 +16,15 @@ const PORT = parseInt(process.env.PORT || '10000', 10);
 // Logging de peticiones HTTP
 app.use(morgan('dev'));
 
-// Configuración de CORS para desarrollo
-app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:3001'], credentials: true }));
+// CORS configuration - permitir conexiones desde cualquier origen
+app.use(cors({
+  origin: '*',  // Permitir cualquier origen para el frontend externo
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
+
+// Manejar preflight requests
+app.options('*', cors());
 
 // Middleware para mostrar cuerpo de petición en dev
 app.use((req: Request, _res: Response, next: NextFunction) => {

@@ -30,6 +30,36 @@ export class VendorController {
     }
   };
 
+  /**
+   * Obtener un vendedor por su userId
+   * Este método es útil para encontrar el vendedor asociado a un usuario con rol de vendedor
+   */
+  public getVendorByUserId = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { userId } = req.query;
+      
+      if (!userId) {
+        return res.status(400).json({ success: false, message: 'El parámetro userId es requerido' });
+      }
+      
+      console.log(`Buscando vendedor con userId: ${userId}`);
+      
+      const repo = AppDataSource.getRepository(Vendor);
+      const vendor = await repo.findOne({ where: { userId: userId as string } });
+      
+      if (!vendor) {
+        console.log(`No se encontró vendedor con userId: ${userId}`);
+        return res.status(404).json({ success: false, message: 'Vendedor no encontrado para este usuario' });
+      }
+      
+      console.log(`Vendedor encontrado: ${vendor.id} (nombre: ${vendor.name})`);
+      return res.status(200).json({ success: true, data: vendor });
+    } catch (error) {
+      console.error('Error al obtener vendedor por userId:', error);
+      return res.status(500).json({ success: false, message: 'Error al obtener vendedor por userId', error: error.message });
+    }
+  };
+
   public createVendor = async (req: Request, res: Response): Promise<Response> => {
     try {
       const userRepo = AppDataSource.getRepository(User);

@@ -10,11 +10,11 @@ import { FaInfoCircle } from 'react-icons/fa';
 import Swal from 'sweetalert2';
 
 const documentTypes = [
-  { value: 'CC', label: 'Cédula de Ciudadanía' },
-  { value: 'CE', label: 'Cédula de Extranjería' },
+  { value: 'Cédula de Ciudadanía', label: 'Cédula de Ciudadanía' },
+  { value: 'Cédula de Extranjería', label: 'Cédula de Extranjería' },
   { value: 'NIT', label: 'NIT' },
-  { value: 'PP', label: 'Pasaporte' },
-  { value: 'TI', label: 'Tarjeta de Identidad' }
+  { value: 'Pasaporte', label: 'Pasaporte' },
+  { value: 'Tarjeta de Identidad', label: 'Tarjeta de Identidad' }
 ];
 
 const CreateCustomerPage: React.FC = () => {
@@ -24,7 +24,7 @@ const CreateCustomerPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     businessName: '',
-    documentType: 'CC',
+    documentType: 'Cédula de Ciudadanía', // Actualizado para usar el valor completo del enum
     documentNumber: '',
     dv: '',
     email: '',
@@ -98,8 +98,8 @@ const CreateCustomerPage: React.FC = () => {
       const customerData = {
         name: formData.name,
         businessName: formData.businessName,
-        identificationType: formData.documentType,
-        identificationNumber: formData.documentNumber,
+        documentType: formData.documentType, // Cambiado de identificationType a documentType
+        documentNumber: formData.documentNumber, // Cambiado de identificationNumber a documentNumber
         dv: formData.dv,
         email: formData.email || 'info@example.com',
         phone: formData.phone || '',
@@ -108,13 +108,22 @@ const CreateCustomerPage: React.FC = () => {
         department: formData.department || '',
         companyId: user.company.id,
         type: 'natural',
-        isActive: true
+        isActive: true,
+        password: 'Cliente123' // Añadimos contraseña por defecto para evitar problemas
       };
+      
+      // Si el usuario es un vendedor, asociar automáticamente el cliente a su cuenta
+      if (user.role === 'vendor') {
+        // @ts-ignore - Ignoramos el error de TypeScript ya que sabemos que esta propiedad es válida
+        customerData.vendorId = user.id;
+        console.log('Cliente asociado automáticamente al vendedor:', user.id);
+      }
       
       console.log('Enviando datos de cliente:', customerData);
       
       // Asegurarse de que el token de autenticación esté presente
       const token = localStorage.getItem('token');
+      
       const response = await axios.post('/api/customers', customerData, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -129,41 +138,22 @@ const CreateCustomerPage: React.FC = () => {
           icon: 'success',
           title: '¡Éxito!',
           text: 'Cliente creado exitosamente',
-          confirmButtonColor: 'var(--color-primary)'
+          confirmButtonText: 'Continuar'
         }).then(() => {
           navigate('/customers');
         });
       } else {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: response.data.message || 'Error al crear el cliente',
-          confirmButtonColor: 'var(--color-primary)'
-        });
-        setErrors({ general: response.data.message || 'Error al crear el cliente' });
+        throw new Error(response.data.message || 'Error al crear el cliente');
       }
     } catch (error: any) {
       console.error('Error al crear el cliente:', error);
-      console.error('Detalles del error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        message: error.message,
-        stack: error.stack
-      });
-      
-      // Mostrar mensaje de error detallado con SweetAlert2
-      const errorMessage = `Error ${error.response?.status || ''}: ${error.response?.data?.message || error.message || 'Error al crear el cliente'}`;
+      const errorMessage = error.response?.data?.message || error.message || 'No se pudo crear el cliente. Por favor, intente de nuevo.';
+      console.log('Detalles del error:', error.response?.data);
       
       Swal.fire({
         icon: 'error',
         title: 'Error',
-        text: errorMessage,
-        confirmButtonColor: 'var(--color-primary)'
-      });
-      
-      setErrors({ 
-        general: errorMessage 
+        text: errorMessage
       });
     } finally {
       setIsSaving(false);
@@ -173,7 +163,14 @@ const CreateCustomerPage: React.FC = () => {
   return (
     <>
       <PageHeader>
-        <PageTitle>Crear Nuevo Cliente</PageTitle>
+        <div>
+          <PageTitle>Crear Nuevo Cliente</PageTitle>
+          {user?.role === 'vendor' && (
+            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+              El cliente será asociado automáticamente a tu cuenta
+            </div>
+          )}
+        </div>
       </PageHeader>
       
       <Card>

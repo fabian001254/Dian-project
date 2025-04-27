@@ -7,6 +7,7 @@ import { useAuth } from '../../../context/AuthContext';
 import SectionLoader from '../../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
 import ReportsService, { ReportFilters, IvaDetail, ReportSummary, DashboardStats } from '../../../services/reports.service';
+import VendorReportsService from '../../../services/vendor-reports.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 

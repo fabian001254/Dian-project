@@ -211,4 +211,55 @@ export class UserController {
       });
     }
   };
+
+  /**
+   * Cambiar la contraseña de un usuario (solo para administradores)
+   */
+  public resetPassword = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      // Verificar que el usuario que hace la solicitud sea administrador
+      const currentUser = req['user'];
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Solo los administradores pueden cambiar contraseñas de otros usuarios'
+        });
+      }
+
+      const { id } = req.params;
+      const { newPassword } = req.body;
+      
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'La nueva contraseña debe tener al menos 6 caracteres'
+        });
+      }
+
+      const userRepository = AppDataSource.getRepository(User);
+      const user = await userRepository.findOne({ where: { id } });
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
+      }
+
+      // Actualizar la contraseña
+      user.password = bcrypt.hashSync(newPassword, bcrypt.genSaltSync());
+      await userRepository.save(user);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Contraseña actualizada exitosamente'
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: 'Error al cambiar la contraseña',
+        error: error.message
+      });
+    }
+  };
 }

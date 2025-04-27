@@ -17,6 +17,7 @@ export class InvoiceController {
     this.invoiceService = new InvoiceService();
   }
 
+
   /**
    * Crea una nueva factura
    * @param req Request
@@ -98,20 +99,68 @@ export class InvoiceController {
       }
 
       // Agregar datos completos del vendedor desde Vendor
-      const vendorRepo = AppDataSource.getRepository(Vendor);
-      const vendorEntity = await vendorRepo.findOne({ where: { userId: invoice.vendorId }, relations: ['user'] });
-      const vendorData = vendorEntity ? {
-        firstName: vendorEntity.user.firstName,
-        lastName: vendorEntity.user.lastName,
-        identificationType: vendorEntity.user.identificationType,
-        identificationNumber: vendorEntity.user.identificationNumber,
-        email: vendorEntity.email,
-        phone: vendorEntity.phone,
-        address: vendorEntity.address,
-        city: vendorEntity.city
-      } : null;
-      // Reemplazar invoice.vendor con datos detallados del vendor
-      (invoice as any).vendor = vendorData;
+      try {
+        console.log('Buscando vendedor para la factura. VendorId:', invoice.vendorId);
+        const vendorRepo = AppDataSource.getRepository(Vendor);
+        
+        // Primero intentamos buscar por userId
+        let vendorEntity = await vendorRepo.findOne({ 
+          where: { userId: invoice.vendorId }, 
+          relations: ['user'] 
+        });
+        
+        // Si no lo encontramos por userId, intentamos buscar por id
+        if (!vendorEntity) {
+          console.log('Vendedor no encontrado por userId, intentando buscar por id...');
+          vendorEntity = await vendorRepo.findOne({ 
+            where: { id: invoice.vendorId }, 
+            relations: ['user'] 
+          });
+        }
+        
+        // Si encontramos el vendedor, extraemos sus datos
+        if (vendorEntity && vendorEntity.user) {
+          console.log('Vendedor encontrado:', vendorEntity.name);
+          const vendorData = {
+            firstName: vendorEntity.user.firstName || '',
+            lastName: vendorEntity.user.lastName || '',
+            identificationType: vendorEntity.user.identificationType || '',
+            identificationNumber: vendorEntity.user.identificationNumber || '',
+            email: vendorEntity.email || '',
+            phone: vendorEntity.phone || '',
+            address: vendorEntity.address || '',
+            city: vendorEntity.city || ''
+          };
+          // Reemplazar invoice.vendor con datos detallados del vendor
+          (invoice as any).vendor = vendorData;
+          console.log('Datos del vendedor asignados a la factura:', vendorData);
+        } else {
+          console.log('No se encontró el vendedor para la factura');
+          (invoice as any).vendor = {
+            firstName: 'Vendedor',
+            lastName: '',
+            identificationType: '',
+            identificationNumber: '',
+            email: '',
+            phone: '',
+            address: '',
+            city: ''
+          };
+        }
+      } catch (vendorError) {
+        console.error('Error al obtener datos del vendedor:', vendorError);
+        // En caso de error, asignar un objeto vacío para evitar errores en el frontend
+        (invoice as any).vendor = {
+          firstName: 'Vendedor',
+          lastName: '',
+          identificationType: '',
+          identificationNumber: '',
+          email: '',
+          phone: '',
+          address: '',
+          city: ''
+        };
+      }
 
       res.status(200).json({
         success: true,
@@ -132,12 +181,23 @@ export class InvoiceController {
    * @param req Request
    * @param res Response
    */
-  public getCompanyInvoices = async (req: Request, res: Response): Promise<void> => {
+  public getInvoicesForCompany = async (req: Request, res: Response): Promise<void> => {
     try {
       const { companyId } = req.params;
-      const { status, customerId, createdBy } = req.query;
+      let { status, customerId, createdBy } = req.query;
+      const currentUser = (req as any).user;
 
-      console.log('Filtros de búsqueda:', { companyId, status, customerId, createdBy });
+      // Si el usuario es un vendedor, forzar el filtro por vendedor
+      if (currentUser && currentUser.role === 'vendor') {
+        console.log('Usuario es vendedor, forzando filtro por vendorId:', currentUser.id);
+        createdBy = currentUser.id;
+      } else if (req.query.vendorId) {
+        // Si se proporciona vendorId en la consulta, usarlo como createdBy
+        console.log('Usando vendorId de la consulta como createdBy:', req.query.vendorId);
+        createdBy = req.query.vendorId as string;
+      }
+
+      console.log('Filtros de búsqueda finales:', { companyId, status, customerId, createdBy });
 
       // Obtener facturas con filtros
       const invoices = await this.invoiceService.getCompanyInvoices(
@@ -306,6 +366,7 @@ export class InvoiceController {
       });
     }
   };
+
 
   /**
    * Obtiene todas las facturas de un cliente específico
@@ -497,6 +558,18 @@ export class InvoiceController {
         .addSelect('SUM(invoice.taxTotal)', 'tax')
         .where('invoice.companyId = :companyId', { companyId })
         .andWhere("strftime('%Y', invoice.issueDate) = :year", { year: year.toString() });
+        
+      // Filtrar por vendedor si el usuario es un vendedor o si se proporciona un vendorId en la consulta
+      const currentUser = (req as any).user;
+      const queryVendorId = req.query.vendorId as string;
+      
+      if (currentUser && currentUser.role === 'vendor') {
+        console.log('Filtrando estadísticas para el vendedor (usuario actual):', currentUser.id);
+        qb = qb.andWhere('invoice.vendorId = :vendorId', { vendorId: currentUser.id });
+      } else if (queryVendorId) {
+        console.log('Filtrando estadísticas para el vendedor (desde query):', queryVendorId);
+        qb = qb.andWhere('invoice.vendorId = :vendorId', { vendorId: queryVendorId });
+      }
       
       // Aplicar filtro de mes si se proporciona
       if (month) {
@@ -534,8 +607,20 @@ export class InvoiceController {
         
         return { period: m, baseAmount: base, taxAmount };
       });
-      // Document status totals
-      const allInv: Invoice[] = await repo.find({ where: { company: { id: companyId } } });
+      // Document status totals - Construir consulta base para facturas
+      let invoiceQuery = repo.createQueryBuilder('invoice')
+        .where('invoice.companyId = :companyId', { companyId });
+      
+      // Aplicar el mismo filtro de vendedor que usamos para las estadísticas
+      if (currentUser && currentUser.role === 'vendor') {
+        console.log('Filtrando facturas para el vendedor (usuario actual):', currentUser.id);
+        invoiceQuery = invoiceQuery.andWhere('invoice.vendorId = :vendorId', { vendorId: currentUser.id });
+      } else if (queryVendorId) {
+        console.log('Filtrando facturas para el vendedor (desde query):', queryVendorId);
+        invoiceQuery = invoiceQuery.andWhere('invoice.vendorId = :vendorId', { vendorId: queryVendorId });
+      }
+      
+      const allInv: Invoice[] = await invoiceQuery.getMany();
       
       const statusCounts: Record<string, number> = { draft:0, issued:0, approved:0, rejected:0, pending:0 };
       allInv.forEach(inv => {

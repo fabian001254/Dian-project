@@ -1,18 +1,36 @@
 import { Request, Response } from 'express';
 import { AppDataSource } from '../../config/database';
 import { Customer } from '../../models/Customer';
+import { User } from '../../models/User';
+import { UserRole } from '../../models/User';
 import bcrypt from 'bcryptjs';
 
 export class CustomerController {
   /**
    * Obtener todos los clientes
    */
-  public getAllCustomers = async (_req: Request, res: Response): Promise<Response> => {
+  public getAllCustomers = async (req: Request, res: Response): Promise<Response> => {
     try {
       const customerRepository = AppDataSource.getRepository(Customer);
+      const { vendorId } = req.query;
+      const currentUser = req.user as User;
       
-      // Obtener todos los clientes
-      const customers = await customerRepository.find();
+      // Construir la consulta base
+      let queryBuilder = customerRepository.createQueryBuilder('customer');
+      
+      // Si el usuario es un vendedor, solo mostrar sus clientes
+      if (currentUser && currentUser.role === UserRole.VENDOR) {
+        console.log(`Filtrando clientes para el vendedor: ${currentUser.id}`);
+        queryBuilder = queryBuilder.where('customer.vendorId = :vendorId', { vendorId: currentUser.id });
+      }
+      // Si se proporciona un vendorId específico en la consulta
+      else if (vendorId) {
+        console.log(`Filtrando clientes para el vendedor especificado: ${vendorId}`);
+        queryBuilder = queryBuilder.where('customer.vendorId = :vendorId', { vendorId });
+      }
+      
+      // Ejecutar la consulta
+      const customers = await queryBuilder.getMany();
 
       return res.status(200).json({
         success: true,
@@ -72,14 +90,17 @@ export class CustomerController {
         email,
         city,
         department,
-        password
+        password,
+        vendorId
       } = req.body;
       
+      const currentUser = req.user as User;
+      
       // Validar datos
-      if (!name || !documentType || !documentNumber || !password) {
+      if (!name || !documentType || !documentNumber) {
         return res.status(400).json({
           success: false,
-          message: 'El nombre, tipo de documento, número de documento y contraseña son obligatorios'
+          message: 'El nombre, tipo de documento y número de documento son obligatorios'
         });
       }
 
@@ -109,7 +130,25 @@ export class CustomerController {
       customer.email = email;
       customer.city = city;
       customer.department = department;
-      customer.password = await bcrypt.hash(password, 10);
+      
+      // Si se proporciona una contraseña, la ciframos, sino usamos una por defecto
+      if (password) {
+        customer.password = await bcrypt.hash(password, 10);
+      } else {
+        // Contraseña por defecto para clientes que no inician sesión
+        customer.password = await bcrypt.hash('Cliente123', 10);
+      }
+      
+      // Si el usuario actual es un vendedor, asignar automáticamente
+      if (currentUser && currentUser.role === UserRole.VENDOR) {
+        customer.vendorId = currentUser.id;
+        console.log(`Cliente asignado automáticamente al vendedor: ${currentUser.id}`);
+      } 
+      // Si se proporciona un vendorId específico y el usuario no es vendedor
+      else if (vendorId) {
+        customer.vendorId = vendorId;
+        console.log(`Cliente asignado al vendedor especificado: ${vendorId}`);
+      }
 
       await customerRepository.save(customer);
 

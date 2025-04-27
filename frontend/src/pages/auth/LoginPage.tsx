@@ -56,24 +56,7 @@ const ErrorMessage = styled.div`
   }
 `;
 
-const ForgotPassword = styled(Link)`
-  display: block;
-  text-align: right;
-  font-size: var(--font-size-sm);
-  margin-top: var(--spacing-sm);
-  color: var(--color-primary);
-`;
-
-const RegisterLink = styled.div`
-  text-align: center;
-  margin-top: var(--spacing-xl);
-  font-size: var(--font-size-sm);
-  
-  a {
-    color: var(--color-primary);
-    font-weight: var(--font-weight-medium);
-  }
-`;
+// Eliminados los componentes ForgotPassword y RegisterLink ya que solo el admin puede gestionar usuarios
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -147,9 +130,7 @@ const LoginPage: React.FC = () => {
             required
           />
           
-          <ForgotPassword to="/auth/forgot-password">
-            ¿Olvidó su contraseña?
-          </ForgotPassword>
+          {/* Enlace de recuperación de contraseña eliminado - Solo administradores pueden gestionar usuarios */}
           
           <Button
             type="submit"
@@ -161,9 +142,7 @@ const LoginPage: React.FC = () => {
           </Button>
         </Form>
         
-        <RegisterLink>
-          ¿No tiene una cuenta? <Link to="/auth/register">Regístrese aquí</Link>
-        </RegisterLink>
+        {/* Enlace de registro eliminado - Solo administradores pueden crear usuarios */}
       </LoginCard>
     </LoginContainer>
   );

@@ -64,6 +64,8 @@ export interface ReportFilters {
   year?: string;
   month?: string;
   compareWithPrevious?: boolean;
+  vendorId?: string; // Añadido para filtrar por vendedor
+  createdBy?: string; // Añadido para compatibilidad con el backend que usa createdBy para filtrar por vendedor
 }
 
 export interface DashboardStats {
@@ -188,8 +190,14 @@ export const ReportsService = {
    */
   getDashboardStats: async (filters: ReportFilters = {}): Promise<DashboardStats> => {
     try {
+      console.log('Obteniendo estadísticas con filtros:', filters);
+      
       // Intentar obtener datos reales de facturas primero
-      const invoiceResponse = await api.get('/invoices', { params: { limit: '100', ...filters } });
+      // Asegurarse de que el vendorId se envía correctamente en los parámetros
+      const params = { limit: '100', ...filters };
+      console.log('Parámetros de consulta para estadísticas:', params);
+      
+      const invoiceResponse = await api.get('/invoices', { params });
       
       if (invoiceResponse && invoiceResponse.data && invoiceResponse.data.data && 
           Array.isArray(invoiceResponse.data.data) && invoiceResponse.data.data.length > 0) {

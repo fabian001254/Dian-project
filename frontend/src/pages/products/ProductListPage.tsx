@@ -428,14 +428,22 @@ const EmptyState = styled.div`
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
-  background-color: var(--color-white);
+  background-color: var(--color-bg-secondary);
   border-radius: var(--border-radius-md);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
   text-align: center;
+  
+  /* Ajustes específicos para modo oscuro */
+  html[data-theme='dark'] & {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
   
   p {
     margin-bottom: var(--spacing-md);
-    color: var(--color-text-light);
+    color: var(--color-text);
   }
 `;
 
@@ -454,14 +462,21 @@ const ProductCardGrid = styled.div`
 `;
 
 const ProductCard = styled.div`
-  background-color: var(--color-white);
+  background-color: var(--color-bg-secondary);
   border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
   
+  /* Ajustes específicos para modo oscuro */
+  html[data-theme='dark'] & {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
+  
   &:hover {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     transform: translateY(-2px);
   }
 `;
@@ -469,9 +484,16 @@ const ProductCard = styled.div`
 const ProductCardHeader = styled.div`
   padding: var(--spacing-md);
   background-color: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  
+  /* Ajustes específicos para modo oscuro */
+  html[data-theme='dark'] & {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+  }
 `;
 
 const ProductCardTitle = styled.h3`
@@ -487,6 +509,12 @@ const ProductCardPrice = styled.div`
 
 const ProductCardBody = styled.div`
   padding: var(--spacing-md);
+  background-color: var(--color-background);
+  
+  /* Ajustes específicos para modo oscuro */
+  html[data-theme='dark'] & {
+    background-color: var(--color-background);
+  }
 `;
 
 const ProductCardCode = styled.div`
@@ -559,6 +587,9 @@ const ProductListPage: React.FC = () => {
     fetchCustomers();
   }, [user]);
 
+  // Estado para almacenar el nombre completo del vendedor actual si el usuario es vendedor
+  const [currentVendorName, setCurrentVendorName] = useState<string>('');
+
   useEffect(() => {
     const fetchVendors = async () => {
       try {
@@ -567,7 +598,52 @@ const ProductListPage: React.FC = () => {
         const response = await axios.get('/api/vendors', {
           params: { companyId: user.company.id }
         });
-        if (response.data.success) setVendors(response.data.data);
+        if (response.data.success) {
+          setVendors(response.data.data);
+          
+          // Si el usuario actual es vendedor, buscar su nombre completo
+          if (user?.role === 'vendor') {
+            // Buscar el vendedor que corresponde al usuario actual
+            const currentVendor = response.data.data.find((v: any) => v.userId === user.id);
+            if (currentVendor) {
+              console.log('Vendedor actual encontrado:', currentVendor.name);
+              
+              // Obtener información adicional del usuario para incluir el apellido
+              try {
+                const userResponse = await axios.get(`/api/users/${currentVendor.userId}`);
+                if (userResponse.data.success && userResponse.data.data) {
+                  const userData = userResponse.data.data;
+                  const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+                  console.log('Nombre completo del vendedor:', fullName);
+                  setCurrentVendorName(fullName || currentVendor.name);
+                } else {
+                  // Si no podemos obtener la información del usuario, usar el nombre del vendedor
+                  setCurrentVendorName(currentVendor.name);
+                }
+              } catch (error) {
+                console.error('Error al obtener información del usuario:', error);
+                setCurrentVendorName(currentVendor.name);
+              }
+            } else {
+              console.log('No se encontró el vendedor para el usuario actual');
+              // Intentar obtener el nombre directamente del usuario si está disponible
+              try {
+                const userResponse = await axios.get(`/api/users/${user.id}`);
+                if (userResponse.data.success && userResponse.data.data) {
+                  const userData = userResponse.data.data;
+                  const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
+                  console.log('Nombre completo del usuario:', fullName);
+                  setCurrentVendorName(fullName || 'Vendedor');
+                } else {
+                  setCurrentVendorName('Vendedor');
+                }
+              } catch (error) {
+                console.error('Error al obtener información del usuario:', error);
+                setCurrentVendorName('Vendedor');
+              }
+            }
+          }
+        }
       } catch (err) {
         console.error('Error al cargar los vendedores:', err);
       } finally {
@@ -588,22 +664,59 @@ const ProductListPage: React.FC = () => {
           return;
         }
         
+        // Preparar los parámetros de consulta
+        const queryParams: any = {
+          companyId: user.company.id,
+          customerId: selectedCustomerId === 'general' ? 'none' : (selectedCustomerId || undefined)
+        };
+        
+        // Si el usuario es un vendedor, usamos su ID directamente
+        if (user.role === 'vendor') {
+          console.log('Usuario con rol vendedor, usando su ID:', user.id);
+          queryParams.userId = user.id; // Enviamos el userId en lugar del vendorId
+        }
+        
+        console.log('Parámetros de consulta para productos:', queryParams);
+        
         // Obtener los productos de la empresa del usuario autenticado
         const response = await axios.get('/api/products', {
-          params: {
-            companyId: user.company.id,
-            customerId: selectedCustomerId === 'general' ? 'none' : (selectedCustomerId || undefined)
-          }
+          params: queryParams
         });
         
         if (response.data.success) {
           const processedProducts = response.data.data.map((product: any) => {
             // Normalizar vendorId para detectar valores vacíos
             const rawVendorId = typeof product.vendorId === 'string' ? product.vendorId.trim() : '';
-            const vendorEntry = vendors.find(v => v.userId === rawVendorId);
-            const vendorName = rawVendorId
-              ? (vendorEntry ? vendorEntry.name : 'Nombre no disponible')
-              : null;
+            
+            // Intentar encontrar el vendedor de varias formas
+            // 1. Primero buscar por userId (si el vendorId es el ID del usuario)
+            let vendorEntry = vendors.find(v => v.userId === rawVendorId);
+            
+            // 2. Si no se encuentra, buscar por id (si el vendorId es el ID del vendedor)
+            if (!vendorEntry) {
+              vendorEntry = vendors.find(v => v.id === rawVendorId);
+            }
+            
+            // 3. Si el usuario actual es vendedor y el vendorId coincide con su ID, usar su nombre
+            const isCurrentUserVendor = user.role === 'vendor' && rawVendorId === user.id;
+            
+            let vendorName;
+            if (isCurrentUserVendor) {
+              // Si es el usuario actual con rol vendedor, usar el nombre que obtuvimos
+              vendorName = currentVendorName || 'Vendedor';
+            } else if (vendorEntry) {
+              // Si encontramos el vendedor en la lista
+              vendorName = vendorEntry.name;
+            } else if (rawVendorId) {
+              // Si hay un vendorId pero no encontramos el vendedor
+              vendorName = 'Vendedor ID: ' + rawVendorId.substring(0, 8) + '...';
+            } else {
+              // Si no hay vendorId
+              vendorName = null;
+            }
+            
+            console.log(`Producto: ${product.name}, vendorId: ${rawVendorId}, vendorName: ${vendorName}`);
+            
             return {
               ...product,
               vendorName

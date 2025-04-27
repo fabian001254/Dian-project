@@ -10,7 +10,8 @@ import {
   FaCertificate, 
   FaChartBar, 
   FaUserTie,
-  FaCog
+  FaCog,
+  FaUserShield
 } from 'react-icons/fa';
 
 interface SidebarProps {

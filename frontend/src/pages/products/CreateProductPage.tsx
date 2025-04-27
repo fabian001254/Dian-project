@@ -33,6 +33,17 @@ const CreateProductPage: React.FC = () => {
   const queryParams = new URLSearchParams(location.search);
   const vendorIdFromUrl = queryParams.get('vendorId') || '';
   
+  // Si el usuario es un vendedor, asignar automáticamente su ID como vendedor
+  const isVendor = user?.role === 'vendor';
+  // FORZAR el uso del ID del usuario actual si es vendedor
+  const vendorId = isVendor ? user?.id : vendorIdFromUrl;
+  
+  console.log('CreateProductPage - Inicialización:');
+  console.log('- ID del usuario actual:', user?.id);
+  console.log('- Rol del usuario:', user?.role);
+  console.log('- ¿Es vendedor?:', isVendor);
+  console.log('- vendorId asignado:', vendorId);
+  
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -42,7 +53,7 @@ const CreateProductPage: React.FC = () => {
     unit: 'Unidad',
     taxRateId: '',
     isActive: true,
-    vendorId: vendorIdFromUrl
+    vendorId: vendorId
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -64,13 +75,15 @@ const CreateProductPage: React.FC = () => {
           }
         }
         
-        // Cargar vendedores reales
-        setLoadingVendors(true);
-        const vendorsResp = await axios.get('/api/vendors');
-        if (vendorsResp.data && vendorsResp.data.success) {
-          // Mapear solo id y name
-          const list = (vendorsResp.data.data as any[]).map(v => ({ id: v.id, name: v.name }));
-          setVendors(list);
+        // Cargar vendedores reales solo si el usuario no es un vendedor
+        if (!isVendor) {
+          setLoadingVendors(true);
+          const vendorsResp = await axios.get('/api/vendors');
+          if (vendorsResp.data && vendorsResp.data.success) {
+            // Mapear solo id y name
+            const list = (vendorsResp.data.data as any[]).map(v => ({ id: v.id, name: v.name }));
+            setVendors(list);
+          }
         }
       } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
@@ -81,7 +94,7 @@ const CreateProductPage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [isVendor]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -169,9 +182,17 @@ const CreateProductPage: React.FC = () => {
     
     try {
       // Asegurarse de que vendorId se envíe correctamente
-      // IMPORTANTE: No usar undefined, ya que axios lo elimina de la petición
-      // Usar null explícitamente para indicar que no hay vendedor
-      const vendorId = formData.vendorId ? formData.vendorId : null;
+    // IMPORTANTE: No usar undefined, ya que axios lo elimina de la petición
+    // Si el usuario es vendedor, SIEMPRE usar su ID, independientemente de lo que esté en formData
+    let vendorIdToSend;
+    
+    if (isVendor && user?.id) {
+      console.log('Usuario es vendedor, forzando el uso de su ID:', user.id);
+      vendorIdToSend = user.id;
+    } else {
+      vendorIdToSend = formData.vendorId ? formData.vendorId : null;
+      console.log('Usuario no es vendedor, usando vendorId de formData:', vendorIdToSend);
+    }
       
       // Crear un objeto limpio con solo los campos necesarios
       const productData = {
@@ -182,14 +203,17 @@ const CreateProductPage: React.FC = () => {
         unitPrice: parseFloat(formData.unitPrice || formData.price),
         unit: formData.unit,
         taxRateId: parseFloat(formData.taxRateId),
-        vendorId: vendorId, // Usar el valor explícito
+        vendorId: vendorIdToSend, // Usar el valor calculado anteriormente
         isActive: formData.isActive,
         companyId: user.company.id
       };
       
       // Logs detallados para diagnóstico
-      console.log('ID del vendedor seleccionado:', formData.vendorId);
-      console.log('ID del vendedor que se enviará:', vendorId);
+      console.log('ID del vendedor seleccionado inicialmente:', formData.vendorId);
+      console.log('ID del vendedor que se enviará (vendorIdToSend):', vendorIdToSend);
+      console.log('ID del usuario actual:', user?.id);
+      console.log('Rol del usuario actual:', user?.role);
+      console.log('¿Es vendedor?:', isVendor);
       console.log('Datos completos que se enviarán al backend:', JSON.stringify(productData, null, 2));
       
       // Asegurarse de que el token de autenticación esté presente
@@ -353,38 +377,61 @@ const CreateProductPage: React.FC = () => {
 
             <FormRow>
               <FormGroup>
-                <Label>Vendedor (Opcional)</Label>
-                <div style={{ position: 'relative' }}>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    onClick={() => setVendorModalOpen(true)}
-                    disabled={loadingVendors}
-                    fullWidth
-                  >
-                    {formData.vendorId
-                      ? `Vendedor: ${vendors.find(v => v.id === formData.vendorId)?.name}`
-                      : 'Seleccionar Vendedor (Opcional)'}
-                  </Button>
-                  {formData.vendorId && (
-                    <button
-                      type="button"
-                      onClick={() => setFormData(prev => ({ ...prev, vendorId: '' }))}
-                      style={{
-                        position: 'absolute',
-                        right: '10px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-danger)',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      ✕
-                    </button>
+                <Label>
+                  Vendedor {isVendor ? '' : '(Opcional)'}
+                  {isVendor && (
+                    <Tooltip>
+                      <FaInfoCircle />
+                      <TooltipText className="tooltip-text">
+                        Como vendedor, los productos que crees serán asignados automáticamente a tu cuenta.
+                      </TooltipText>
+                    </Tooltip>
                   )}
-                </div>
+                </Label>
+                
+                {isVendor ? (
+                  // Si es un vendedor, mostrar un campo de texto deshabilitado con su nombre
+                  <Input
+                    type="text"
+                    value={`${user?.firstName} ${user?.lastName}`}
+                    disabled
+                    style={{ backgroundColor: 'var(--color-gray-light)' }}
+                    fullWidth
+                  />
+                ) : (
+                  // Si no es un vendedor, mostrar el selector normal
+                  <div style={{ position: 'relative' }}>
+                    <Button
+                      variant="outline"
+                      type="button"
+                      onClick={() => setVendorModalOpen(true)}
+                      disabled={loadingVendors}
+                      fullWidth
+                    >
+                      {formData.vendorId
+                        ? `Vendedor: ${vendors.find(v => v.id === formData.vendorId)?.name || 'Seleccionado'}`
+                        : 'Seleccionar Vendedor (Opcional)'}
+                    </Button>
+                    {formData.vendorId && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, vendorId: '' }))}
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--color-danger)',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                )}
                 {errors.vendorId && <ErrorText>{errors.vendorId}</ErrorText>}
               </FormGroup>
             </FormRow>
@@ -421,15 +468,17 @@ const CreateProductPage: React.FC = () => {
           </ActionButtons>
         </form>
       </Card>
-      <VendorSelectorModal
-        isOpen={vendorModalOpen}
-        onClose={() => setVendorModalOpen(false)}
-        onSelectVendor={(id: string) => {
-          setFormData(prev => ({ ...prev, vendorId: id }));
-          setVendorModalOpen(false);
-        }}
-        initialVendorId={formData.vendorId}
-      />
+      {!isVendor && (
+        <VendorSelectorModal
+          isOpen={vendorModalOpen}
+          onClose={() => setVendorModalOpen(false)}
+          onSelectVendor={(id: string) => {
+            setFormData(prev => ({ ...prev, vendorId: id }));
+            setVendorModalOpen(false);
+          }}
+          initialVendorId={formData.vendorId}
+        />
+      )}
     </>
   );
 };

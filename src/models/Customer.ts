@@ -2,6 +2,7 @@ import { Entity, Column, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './BaseEntity';
 import { Invoice } from './Invoice';
 import { Company } from './Company';
+import { User } from './User';
 
 export enum CustomerType {
   NATURAL = 'natural',
@@ -74,6 +75,13 @@ export class Customer extends BaseEntity {
   @ManyToOne(() => Company)
   @JoinColumn({ name: 'companyId' })
   company: Company;
+  
+  @Column({ nullable: true })
+  vendorId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'vendorId' })
+  vendor: User;
 
   @OneToMany(() => Invoice, invoice => invoice.customer)
   invoices: Invoice[];

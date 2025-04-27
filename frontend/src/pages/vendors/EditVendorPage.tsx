@@ -7,6 +7,7 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import SectionLoader from '../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext';
 
 interface VendorForm {
   name: string;
@@ -17,6 +18,11 @@ interface VendorForm {
   department?: string;
   identificationType?: string;
   identificationNumber?: string;
+}
+
+interface PasswordChangeForm {
+  newPassword: string;
+  confirmPassword: string;
 }
 
 const Container = styled.div`
@@ -39,17 +45,35 @@ const Label = styled.label`
   color: var(--color-text);
 `;
 
+const Divider = styled.hr`
+  margin: var(--spacing-lg) 0;
+  border: 0;
+  border-top: 1px solid var(--color-border);
+`;
+
+const SectionTitle = styled.h3`
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  margin-bottom: var(--spacing-md);
+`;
+
 const EditVendorPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [form, setForm] = useState<VendorForm>({ name: '', email: '', phone: '', address: '', city: '', department: '', identificationType: '', identificationNumber: '' });
+  const [passwordForm, setPasswordForm] = useState<PasswordChangeForm>({ newPassword: '', confirmPassword: '' });
   const [loading, setLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string,string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string,string>>({});
+  const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
     axios.get(`/api/vendors/${id}`)
       .then(res => {
         const data = res.data.data;
+        console.log('Datos del vendedor:', data);
+        
         setForm({
           name: data.name,
           email: data.email,
@@ -60,8 +84,21 @@ const EditVendorPage: React.FC = () => {
           identificationType: data.user?.identificationType || '',
           identificationNumber: data.user?.identificationNumber || ''
         });
+        
+        // Guardar el ID del usuario asociado al vendedor para el cambio de contraseña
+        if (data.userId) {
+          console.log('ID del usuario asociado al vendedor (userId):', data.userId);
+          setUserId(data.userId);
+        } else if (data.user && data.user.id) {
+          console.log('ID del usuario asociado al vendedor (user.id):', data.user.id);
+          setUserId(data.user.id);
+        } else {
+          console.warn('No se encontró un ID de usuario asociado al vendedor');
+        }
       })
-      .catch(() => {})
+      .catch((error) => {
+        console.error('Error al cargar los datos del vendedor:', error);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -70,11 +107,26 @@ const EditVendorPage: React.FC = () => {
     setErrors({ ...errors, [e.target.name]: '' });
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordForm({ ...passwordForm, [e.target.name]: e.target.value });
+    setPasswordErrors({ ...passwordErrors, [e.target.name]: '' });
+  };
+
   const validate = () => {
     const errs: Record<string,string> = {};
     if (!form.name) errs.name = 'Nombre es obligatorio';
     if (!form.email) errs.email = 'Email es obligatorio';
     setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validatePassword = () => {
+    const errs: Record<string,string> = {};
+    if (!passwordForm.newPassword) errs.newPassword = 'La nueva contraseña es obligatoria';
+    if (passwordForm.newPassword.length < 6) errs.newPassword = 'La contraseña debe tener al menos 6 caracteres';
+    if (!passwordForm.confirmPassword) errs.confirmPassword = 'Debe confirmar la contraseña';
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) errs.confirmPassword = 'Las contraseñas no coinciden';
+    setPasswordErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
@@ -93,7 +145,55 @@ const EditVendorPage: React.FC = () => {
     }
   };
 
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validatePassword()) return;
+    
+    // Verificar que el usuario sea administrador
+    if (!user || (user.role !== 'admin' && user.role !== 'ADMIN')) {
+      Swal.fire('Error', 'Solo los administradores pueden cambiar contraseñas', 'error');
+      return;
+    }
+    
+    // Verificar que tengamos el ID del usuario o el ID del vendedor
+    if (!userId && !id) {
+      Swal.fire('Error', 'No se encontró el usuario asociado al vendedor', 'error');
+      return;
+    }
+    
+    // Si no tenemos el userId pero tenemos el id del vendedor, intentamos obtener el userId
+    const targetUserId = userId || id;
+    console.log('Intentando cambiar contraseña para el usuario con ID:', targetUserId);
+    
+    try {
+      const response = await axios.post(`/api/users/${targetUserId}/reset-password`, {
+        newPassword: passwordForm.newPassword
+      });
+      
+      if (response.data.success) {
+        Swal.fire('Éxito', 'Contraseña actualizada correctamente', 'success');
+        // Limpiar el formulario
+        setPasswordForm({ newPassword: '', confirmPassword: '' });
+      } else {
+        throw new Error(response.data.message || 'Error al cambiar la contraseña');
+      }
+    } catch (err: any) {
+      console.error('Error al cambiar la contraseña:', err);
+      Swal.fire('Error', err.response?.data?.message || err.message || 'No se pudo cambiar la contraseña', 'error');
+    }
+  };
+
   if (loading) return <SectionLoader />;
+
+  // Solo mostrar la sección de cambio de contraseña para administradores
+  // El rol puede estar como 'admin' o como 'ADMIN' dependiendo de cómo esté almacenado en la base de datos
+  const isAdmin = user && (user.role === 'admin' || user.role === 'ADMIN');
+  
+  // Logs para depuración
+  console.log('Usuario actual:', user);
+  console.log('Rol del usuario:', user?.role);
+  console.log('¿Es administrador?', isAdmin);
+  console.log('ID del usuario del vendedor:', userId);
 
   return (
     <Container>
@@ -137,6 +237,43 @@ const EditVendorPage: React.FC = () => {
           <Button variant="primary" type="submit">Guardar</Button>
           <Button variant="outline" onClick={() => navigate(`/vendors/${id}`)} style={{marginLeft:'8px'}}>Cancelar</Button>
         </Form>
+        
+        {/* Sección de cambio de contraseña - Solo visible para administradores */}
+        {isAdmin && (
+          <>
+            <Divider />
+            <SectionTitle>Cambiar Contraseña</SectionTitle>
+            <Form onSubmit={handlePasswordSubmit}>
+              <FormGroup>
+                <Label>Nueva Contraseña</Label>
+                <Input 
+                  type="password" 
+                  name="newPassword" 
+                  value={passwordForm.newPassword} 
+                  onChange={handlePasswordChange} 
+                  placeholder="Ingrese la nueva contraseña" 
+                />
+                {passwordErrors.newPassword && (
+                  <div style={{color:'var(--color-error)'}}>{passwordErrors.newPassword}</div>
+                )}
+              </FormGroup>
+              <FormGroup>
+                <Label>Confirmar Contraseña</Label>
+                <Input 
+                  type="password" 
+                  name="confirmPassword" 
+                  value={passwordForm.confirmPassword} 
+                  onChange={handlePasswordChange} 
+                  placeholder="Confirme la nueva contraseña" 
+                />
+                {passwordErrors.confirmPassword && (
+                  <div style={{color:'var(--color-error)'}}>{passwordErrors.confirmPassword}</div>
+                )}
+              </FormGroup>
+              <Button variant="primary" type="submit">Cambiar Contraseña</Button>
+            </Form>
+          </>
+        )}
       </Card>
     </Container>
   );

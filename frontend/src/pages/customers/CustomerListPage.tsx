@@ -268,6 +268,7 @@ interface Customer {
   address: string;
   city: string;
   createdAt: string;
+  vendorId?: string;
   invoices?: Invoice[];
 }
 
@@ -281,8 +282,48 @@ const CustomerListPage: React.FC = () => {
   const [showFullList, setShowFullList] = useState(true);
   const [customerInvoices, setCustomerInvoices] = useState<Record<string, Invoice[]>>({});
   const [loadingInvoices, setLoadingInvoices] = useState<Record<string, boolean>>({});
+  const [vendors, setVendors] = useState<{id: string; userId: string; name: string}[]>([]);
+  const [vendorUsers, setVendorUsers] = useState<{id: string; firstName: string; lastName: string}[]>([]);
 
   const { user } = useAuth();
+
+  // Cargar los vendedores y sus usuarios asociados
+  useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        if (!user?.company?.id) return;
+        
+        // Obtener la lista de vendedores
+        const vendorsResponse = await axios.get('/api/vendors', {
+          params: { companyId: user.company.id }
+        });
+        
+        if (vendorsResponse.data.success) {
+          setVendors(vendorsResponse.data.data);
+          
+          // Obtener información de usuarios para todos los vendedores
+          const userIds = vendorsResponse.data.data
+            .filter((v: any) => v.userId)
+            .map((v: any) => v.userId);
+          
+          if (userIds.length > 0) {
+            // Obtener datos de usuarios en una sola llamada
+            const usersResponse = await axios.get('/api/users/batch', {
+              params: { ids: userIds.join(',') }
+            });
+            
+            if (usersResponse.data.success) {
+              setVendorUsers(usersResponse.data.data);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar los vendedores:', err);
+      }
+    };
+    
+    fetchVendors();
+  }, [user?.company?.id]);
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -415,22 +456,20 @@ const CustomerListPage: React.FC = () => {
   return (
     <Container>
       <Header>
-        <h1>Clientes</h1>
         <div>
-          <Button
-            variant="secondary"
-            onClick={() => setShowFullList(!showFullList)}
-            style={{ marginRight: 'var(--spacing-sm)' }}
-          >
-            {showFullList ? 'Vista Resumida' : 'Vista Completa'}
-          </Button>
-          <Button 
-            variant="primary" 
-            onClick={() => navigate('/customers/create')}
-          >
-            <FaPlus /> Nuevo Cliente
-          </Button>
+          <h1>Clientes</h1>
+          {user?.role === 'vendor' && (
+            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+              Solo se muestran los clientes asociados a tu cuenta
+            </div>
+          )}
         </div>
+        <Button
+          variant="primary"
+          onClick={() => navigate('/customers/create')}
+        >
+          <FaPlus style={{ marginRight: 'var(--spacing-xs)' }} /> Nuevo Cliente
+        </Button>
       </Header>
       <SearchBar>
         <SearchInput>
@@ -468,6 +507,7 @@ const CustomerListPage: React.FC = () => {
                     <th>Correo Electrónico</th>
                     <th>Teléfono</th>
                     <th>Ciudad</th>
+                    <th>Vendedor</th>
                   </>
                 )}
                 <th>Acciones</th>
@@ -487,6 +527,26 @@ const CustomerListPage: React.FC = () => {
                         <Td>{customer.email}</Td>
                         <Td>{customer.phone}</Td>
                         <Td>{customer.city}</Td>
+                        <Td>
+                          {(() => {
+                            // Buscar el vendedor asociado al cliente
+                            if (!customer.vendorId) return '-';
+                            
+                            // Buscar el vendedor por ID
+                            const vendor = vendors.find(v => v.id === customer.vendorId);
+                            if (!vendor) return `Vendedor ID: ${customer.vendorId.substring(0, 8)}...`;
+                            
+                            // Si el vendedor no tiene userId, mostrar solo su nombre
+                            if (!vendor.userId) return vendor.name;
+                            
+                            // Buscar el usuario asociado al vendedor para obtener nombre completo
+                            const vendorUser = vendorUsers.find(u => u.id === vendor.userId);
+                            if (!vendorUser) return vendor.name;
+                            
+                            // Mostrar nombre completo del vendedor
+                            return `${vendorUser.firstName} ${vendorUser.lastName}`.trim() || vendor.name;
+                          })()}
+                        </Td>
                       </>
                     )}
                     <Td>

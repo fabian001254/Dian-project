@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
-import { FaPlus, FaTrash, FaInfoCircle, FaSearch, FaEdit } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaInfoCircle, FaSearch, FaEdit, FaLock } from 'react-icons/fa';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import Card from '../../components/ui/Card';
@@ -14,6 +14,7 @@ import CreateProductModal from '../../components/modals/CreateProductModal';
 import CustomerSelectorModal from '../../components/modals/CustomerSelectorModal';
 import VendorSelectorModal from '../../components/modals/VendorSelectorModal';
 import Swal from 'sweetalert2';
+import { useAuth } from '../../context/AuthContext';
 
 const PageHeader = styled.div`
   display: flex;
@@ -272,6 +273,7 @@ const CreateInvoicePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
+  const { user } = useAuth();
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerFilter, setCustomerFilter] = useState('');
@@ -308,6 +310,17 @@ const CreateInvoicePage: React.FC = () => {
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.subtotal, 0);
   const taxTotal = invoiceData.items.reduce((sum, item) => sum + item.taxAmount, 0);
   const total = subtotal + taxTotal;
+
+  // Efecto para autoseleccionar el vendedor si el usuario es un vendedor
+  useEffect(() => {
+    if (user && user.role === 'vendor') {
+      setInvoiceData(prev => ({
+        ...prev,
+        vendorId: user.id
+      }));
+      setVendorName(`${user.firstName} ${user.lastName}`);
+    }
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true; // Flag para evitar actualizaciones en componentes desmontados
@@ -665,13 +678,30 @@ const CreateInvoicePage: React.FC = () => {
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', marginBottom: '4px', fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>Vendedor</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                <Input placeholder="Seleccione un vendedor" value={vendorName} readOnly fullWidth />
-                <SelectButton variant="secondary" size="small" onClick={() => setIsVendorSelectorOpen(true)}>
-                  Seleccionar
-                </SelectButton>
-                <Button variant="outline" size="small" onClick={() => navigate('/vendors/create')}>
-                  Crear vendedor
-                </Button>
+                <Input 
+                  placeholder="Seleccione un vendedor" 
+                  value={vendorName} 
+                  readOnly 
+                  fullWidth 
+                  style={user?.role === 'vendor' ? { backgroundColor: 'var(--color-gray-light)' } : {}} 
+                />
+                {user?.role === 'vendor' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
+                    <FaLock /> <span>Asignado</span>
+                    <div title="Los productos se asignarán automáticamente a tu cuenta" style={{ marginLeft: '4px', cursor: 'help' }}>
+                      <FaInfoCircle size={14} />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <SelectButton variant="secondary" size="small" onClick={() => setIsVendorSelectorOpen(true)}>
+                      Seleccionar
+                    </SelectButton>
+                    <Button variant="outline" size="small" onClick={() => navigate('/vendors/create')}>
+                      Crear vendedor
+                    </Button>
+                  </>
+                )}
               </div>
               {invoiceData.vendorId && (
                 <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
@@ -1016,22 +1046,25 @@ const CreateInvoicePage: React.FC = () => {
           }));
         }}
         initialCustomerId={invoiceData.customerId}
+        vendorId={user?.role === 'vendor' ? user.id : undefined}
       />
-      <VendorSelectorModal
-        isOpen={isVendorSelectorOpen}
-        onClose={() => setIsVendorSelectorOpen(false)}
-        onSelectVendor={async (id) => {
-          setInvoiceData(prev => ({ ...prev, vendorId: id }));
-          try {
-            const resp = await axios.get(`/api/users/${id}`);
-            const u = resp.data.data || resp.data;
-            setVendorName(`${u.firstName} ${u.lastName}`);
-          } catch {
-            setVendorName('');
-          }
-        }}
-        initialVendorId={invoiceData.vendorId}
-      />
+      {user?.role !== 'vendor' && (
+        <VendorSelectorModal
+          isOpen={isVendorSelectorOpen}
+          onClose={() => setIsVendorSelectorOpen(false)}
+          onSelectVendor={async (id) => {
+            setInvoiceData(prev => ({ ...prev, vendorId: id }));
+            try {
+              const resp = await axios.get(`/api/users/${id}`);
+              const u = resp.data.data || resp.data;
+              setVendorName(`${u.firstName} ${u.lastName}`);
+            } catch {
+              setVendorName('');
+            }
+          }}
+          initialVendorId={invoiceData.vendorId}
+        />
+      )}
     </>
   );
 };

@@ -405,18 +405,10 @@ export class ProductController {
       product.companyId = user.companyId;
       
       // IMPORTANTE: Siempre asignar el ID del usuario actual como vendorId si tiene rol de vendedor
-      // Esto es CRÍTICO y tiene prioridad sobre cualquier otro valor que se haya enviado
       if (user && user.role === UserRole.VENDOR) {
-        console.log('==== USUARIO ES VENDEDOR ====');
-        console.log(`Usuario con rol vendedor, ID: ${user.id}`);
-        console.log(`vendorId recibido en la petición: ${vendorId}`);
-        console.log(`FORZANDO el uso del ID del usuario actual: ${user.id}`);
-        
-        // SIEMPRE usar el ID del usuario actual, ignorando cualquier otro valor
-        product.vendorId = user.id;
-        
+        console.log(`Usuario con rol vendedor, asignando su ID como vendorId: ${user.id}`);
+        product.vendorId = user.id; // Guardar el ID del usuario directamente
         console.log(`Producto asignado al vendedor (userId): ${product.vendorId}`);
-        console.log('=============================');
       } 
       // Si el usuario no es vendedor pero se proporciona un vendorId, lo procesamos
       else if (vendorId) {

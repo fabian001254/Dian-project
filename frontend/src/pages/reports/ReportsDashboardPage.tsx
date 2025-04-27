@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import SectionLoader from '../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';
 import ReportsService, { ReportFilters, DashboardStats } from '../../services/reports.service';
+import VendorReportsService from '../../services/vendor-reports.service';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 
@@ -410,20 +411,30 @@ const ReportsDashboardPage: React.FC = () => {
   const favoriteReports: ReportType[] = [
     reportTypes[0], // Informe de IVA
     reportTypes[2], // Ventas por Período
-    reportTypes[5], // Estado de Facturas
   ];
-  
+
   // Cargar datos del dashboard
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const data = await ReportsService.getDashboardStats(filters);
-      // Asegurarse de que todos los arrays existan, incluso si están vacíos
+      // Determinar qué servicio usar según el rol del usuario
+      let response;
+      
+      if (user && user.role === 'vendor') {
+        // Si es un vendedor, usar el servicio específico para vendedores
+        console.log('Cargando datos de reportes filtrados para vendedor:', user.id);
+        response = await VendorReportsService.getDashboardStats(filters);
+      } else {
+        // Si es admin u otro rol, usar el servicio normal
+        response = await ReportsService.getDashboardStats(filters);
+      }
+      
+      // Actualizar el estado con los datos recibidos
       setDashboardData({
-        salesMetrics: data.salesMetrics || [],
-        salesData: data.salesData || [],
-        taxData: data.taxData || [],
-        documentStatusData: data.documentStatusData || []
+        salesMetrics: response.salesMetrics || [],
+        salesData: response.salesData || [],
+        taxData: response.taxData || [],
+        documentStatusData: response.documentStatusData || []
       });
     } catch (error) {
       console.error('Error al cargar datos del dashboard:', error);
@@ -438,6 +449,7 @@ const ReportsDashboardPage: React.FC = () => {
     }
   };
   
+  // Cargar datos al montar el componente
   useEffect(() => {
     loadDashboardData();
   }, []);

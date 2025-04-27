@@ -10,7 +10,8 @@ import DashboardLayout from './components/layout/DashboardLayout';
 import Layout from './components/layout/Layout';
 
 // Auth Pages
-import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/auth';
+import { LoginPage } from './pages/auth';
+// RegisterPage y ForgotPasswordPage eliminados - solo administradores pueden gestionar usuarios
 
 // Main Pages
 import DashboardPage from './pages/dashboard/DashboardPage';
@@ -85,16 +86,8 @@ const App: React.FC = () => {
               <LoginPage />
             </PublicRoute>
           } />
-          <Route path="/auth/register" element={
-            <PublicRoute>
-              <RegisterPage />
-            </PublicRoute>
-          } />
-          <Route path="/auth/forgot-password" element={
-            <PublicRoute>
-              <ForgotPasswordPage />
-            </PublicRoute>
-          } />
+          {/* Ruta de registro eliminada - solo administradores pueden crear usuarios */}
+          {/* Ruta de recuperación de contraseña eliminada - solo administradores pueden gestionar usuarios */}
           
           {/* Protected Routes with Dashboard Layout (sidebar + content + dashboard) */}
           <Route path="/" element={

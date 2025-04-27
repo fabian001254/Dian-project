@@ -25,6 +25,18 @@ export class AuthController {
    */
   public register = async (req: Request, res: Response): Promise<void> => {
     try {
+      // Verificar si el usuario es administrador
+      const currentUser = req.user;
+      
+      // Si la ruta es protegida y requiere autenticación, verificar que sea administrador
+      if (currentUser && currentUser.role !== UserRole.ADMIN) {
+        res.status(403).json({
+          success: false,
+          message: 'Solo los administradores pueden registrar nuevos usuarios'
+        });
+        return;
+      }
+      
       const { firstName, lastName, email, password, companyId, role } = req.body;
       
       // Validar datos mínimos

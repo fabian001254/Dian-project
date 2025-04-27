@@ -20,6 +20,7 @@ interface CustomerSelectorModalProps {
   onClose: () => void;
   onSelectCustomer: (customerId: string) => void;
   initialCustomerId?: string;
+  vendorId?: string; // ID del vendedor para filtrar clientes
 }
 
 const ModalOverlay = styled.div`
@@ -164,7 +165,8 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   isOpen,
   onClose,
   onSelectCustomer,
-  initialCustomerId
+  initialCustomerId,
+  vendorId
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -199,19 +201,38 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
   const loadCustomers = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get('/api/customers');
+      // Si hay un vendorId, usamos un endpoint específico para obtener solo los clientes de ese vendedor
+      const url = vendorId 
+        ? `/api/customers?vendorId=${vendorId}` 
+        : '/api/customers';
+      
+      console.log(`Cargando clientes desde: ${url}`);
+      
+      const response = await axios.get(url);
+      let loadedCustomers = [];
+      
       if (response.data && Array.isArray(response.data)) {
-        setCustomers(response.data);
-        setFilteredCustomers(response.data);
+        loadedCustomers = response.data;
         console.log('Clientes cargados correctamente:', response.data.length);
       } else if (response.data && response.data.success) {
-        setCustomers(response.data.data);
-        setFilteredCustomers(response.data.data);
+        loadedCustomers = response.data.data;
         console.log('Clientes cargados correctamente:', response.data.data.length);
       } else {
         console.error('Formato de respuesta inesperado:', response.data);
-        setCustomers([]);
-        setFilteredCustomers([]);
+      }
+      
+      // Si hay un vendorId, filtramos los clientes por ese vendedor (doble verificación)
+      if (vendorId && loadedCustomers.length > 0) {
+        console.log(`Filtrando clientes para el vendedor: ${vendorId}`);
+        const filteredByVendor = loadedCustomers.filter((customer: Customer & { vendorId?: string; vendorIds?: string[] }) => 
+          customer.vendorId === vendorId || customer.vendorIds?.includes(vendorId)
+        );
+        setCustomers(filteredByVendor);
+        setFilteredCustomers(filteredByVendor);
+        console.log(`Clientes filtrados por vendedor: ${filteredByVendor.length}`);
+      } else {
+        setCustomers(loadedCustomers);
+        setFilteredCustomers(loadedCustomers);
       }
     } catch (error) {
       console.error('Error al cargar clientes:', error);
@@ -233,7 +254,14 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     <ModalOverlay>
       <ModalContent>
         <ModalHeader>
-          <ModalTitle>Seleccionar Cliente</ModalTitle>
+          <ModalTitle>
+            {vendorId ? 'Seleccionar Cliente Asociado' : 'Seleccionar Cliente'}
+            {vendorId && (
+              <div style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
+                Solo se muestran clientes asociados a tu cuenta
+              </div>
+            )}
+          </ModalTitle>
           <Button variant="outline" size="small" onClick={() => { onClose(); navigate('/customers/create'); }}>
             Nuevo Cliente
           </Button>
@@ -294,7 +322,9 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
             </CustomersList>
           ) : (
             <NoResults>
-              No se encontraron clientes que coincidan con la búsqueda
+              {vendorId 
+                ? 'No se encontraron clientes asociados a tu cuenta. Puedes crear un nuevo cliente desde el botón superior.'
+                : 'No se encontraron clientes que coincidan con la búsqueda'}
             </NoResults>
           )}
         </ModalBody>

@@ -1,5 +1,5 @@
 // Barrel file for all pages
-export { LoginPage, RegisterPage, ForgotPasswordPage } from './auth';
+export { LoginPage } from './auth';
 export { default as DashboardPage } from './dashboard/DashboardPage';
 export { default as InvoiceListPage } from './invoices/InvoiceListPage';
 export { default as CreateInvoicePage } from './invoices/CreateInvoicePage';

@@ -15,4 +15,7 @@ router.post('/', authMiddleware, userController.createUser);
 router.put('/:id', authMiddleware, userController.updateUser);
 router.delete('/:id', authMiddleware, userController.deleteUser);
 
+// Ruta para cambiar la contraseña de un usuario (solo administradores)
+router.post('/:id/reset-password', authMiddleware, userController.resetPassword);
+
 export default router;

@@ -14,5 +14,5 @@ RUN npm install --production
 COPY --from=builder /app/dist ./dist
 # Note: compiled seed script lives in dist/src
 # Expose port and start
-EXPOSE 3000
+EXPOSE ${PORT:-10000}
 CMD ["node", "dist/index.js"]

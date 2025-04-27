@@ -12,9 +12,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --production
 COPY --from=builder /app/dist ./dist
-# Copy migration/seed scripts if needed
-COPY --from=builder /app/src/ensure-data.ts ./src/ensure-data.ts
-
+# Note: compiled seed script lives in dist/src
 # Expose port and start
 EXPOSE 3000
 CMD ["node", "dist/index.js"]

@@ -100,42 +100,48 @@ function startMainApplication() {
     console.log('🚀 Iniciando la aplicación principal...');
     appStatus.status = 'starting_main';
     
-    const mainProcess = spawn('node', ['dist/index.js'], {
-      stdio: 'pipe', // Capturar la salida
-      shell: true,
-      env: {
-        ...process.env,
-        PORT: PORT, // La aplicación principal usará el mismo puerto que el healthcheck
-        DATABASE_PATH: '/data/database.sqlite' // Usar el directorio de datos persistente
-      }
-    });
-
-    // Capturar la salida del proceso principal
-    let mainOutput = '';
-    mainProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      mainOutput += output;
-      console.log(output);
+    // Cerrar el servidor de healthcheck antes de iniciar la aplicación principal
+    server.close(() => {
+      console.log('🔄 Servidor de healthcheck cerrado, iniciando aplicación principal');
       
-      // Detectar cuando la aplicación principal está lista
-      if (output.includes('Server running on port')) {
-        appStatus.status = 'running';
-        appStatus.mainAppStarted = true;
-      }
-    });
+      // Iniciar la aplicación principal
+      const mainProcess = spawn('node', ['dist/index.js'], {
+        stdio: 'pipe', // Capturar la salida
+        shell: true,
+        env: {
+          ...process.env,
+          PORT: PORT, // La aplicación principal usará el mismo puerto
+          DATABASE_PATH: '/data/database.sqlite' // Usar el directorio de datos persistente
+        }
+      });
+      
+      // Capturar la salida del proceso principal
+      let mainOutput = '';
+      mainProcess.stdout.on('data', (data) => {
+        const output = data.toString();
+        mainOutput += output;
+        console.log(output);
+        
+        // Detectar cuando la aplicación principal está lista
+        if (output.includes('Server running on port')) {
+          appStatus.status = 'running';
+          appStatus.mainAppStarted = true;
+        }
+      });
 
-    mainProcess.stderr.on('data', (data) => {
-      const output = data.toString();
-      mainOutput += output;
-      console.error(output);
-      appStatus.errors.push({ time: new Date().toISOString(), message: output });
-    });
-    
-    mainProcess.on('close', (code) => {
-      console.error(`❌ La aplicación principal se cerró con código ${code}`);
-      appStatus.status = 'main_app_crashed';
-      appStatus.errors.push({ time: new Date().toISOString(), message: `Aplicación principal cerrada con código ${code}` });
-      // No cerrar el servidor de healthcheck para que Railway no reinicie el contenedor
+      mainProcess.stderr.on('data', (data) => {
+        const output = data.toString();
+        mainOutput += output;
+        console.error(output);
+        appStatus.errors.push({ time: new Date().toISOString(), message: output });
+      });
+      
+      mainProcess.on('close', (code) => {
+        console.error(`❌ La aplicación principal se cerró con código ${code}`);
+        appStatus.status = 'main_app_crashed';
+        appStatus.errors.push({ time: new Date().toISOString(), message: `Aplicación principal cerrada con código ${code}` });
+        // No reiniciar el servidor de healthcheck para que Railway no reinicie el contenedor
+      });
     });
   });
 }

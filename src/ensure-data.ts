@@ -230,6 +230,8 @@ const ensureData = async () => {
       for (const productData of products) {
         const product = new Product();
         Object.assign(product, productData);
+        // Asegurar que price no sea null
+        product.price = product.unitPrice;
         await productRepository.save(product);
       }
       console.log(' Productos creados');

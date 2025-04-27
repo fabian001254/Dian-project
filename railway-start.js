@@ -105,7 +105,7 @@ function startMainApplication() {
       shell: true,
       env: {
         ...process.env,
-        PORT: 0, // La aplicación principal usará un puerto aleatorio
+        PORT: PORT, // La aplicación principal usará el mismo puerto que el healthcheck
         DATABASE_PATH: '/data/database.sqlite' // Usar el directorio de datos persistente
       }
     });

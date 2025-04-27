@@ -126,13 +126,13 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   onClose
 }) => {
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (isOpen && duration > 0) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
-      
-      return () => clearTimeout(timer);
+      timer = setTimeout(() => onClose(), duration);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isOpen, duration, onClose]);
   
   if (!isOpen) return null;

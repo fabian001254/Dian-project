@@ -15,7 +15,7 @@ const { DataSource } = require('typeorm');
 // Database configuration options
 export const dbConfig = {
   type: 'sqlite' as const,
-  database: path.join(__dirname, '../../database.sqlite'),
+  database: process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite'),
   entities: [
     User,
     Company,
@@ -34,7 +34,7 @@ export const dbConfig = {
 // Create and export the DataSource instance
 export const AppDataSource = new DataSource({
   type: 'sqlite',
-  database: path.join(__dirname, '../../database.sqlite'),
+  database: process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite'),
   entities: [
     User,
     Company,

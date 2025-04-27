@@ -1,0 +1,11 @@
+app = "dian-facturacion"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATABASE_PATH = "/data/database.sqlite"
+
+[[mounts]]
+  source = "sqlite_data"
+  destination = "/data"

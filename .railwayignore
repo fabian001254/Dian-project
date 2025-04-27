@@ -1,0 +1,6 @@
+# Archivos y directorios a ignorar en el despliegue
+node_modules
+.git
+.github
+.vscode
+*.log

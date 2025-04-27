@@ -1,2 +1,1 @@
-web: npm run start
-release: npm run release
+web: npm run seed && npm start

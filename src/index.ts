@@ -32,6 +32,11 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files
 app.use(express.static(path.join(__dirname, '../frontend/public')));
 
+// Ruta de healthcheck para Railway
+app.get('/api/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Sistema funcionando correctamente' });
+});
+
 // API routes
 app.use('/api', apiRoutes);
 

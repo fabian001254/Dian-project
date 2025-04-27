@@ -12,10 +12,21 @@ import { Vendor } from '../models/Vendor';
 // Importar DataSource usando require para evitar problemas con TypeScript
 const { DataSource } = require('typeorm');
 
+// Determinar la ruta de la base de datos
+// En Railway, usamos /data para almacenamiento persistente
+const getDatabasePath = () => {
+  // Si estamos en Railway (producción), usar la carpeta /data para persistencia
+  if (process.env.RAILWAY_ENVIRONMENT) {
+    return process.env.DATABASE_PATH || '/data/database.sqlite';
+  }
+  // En desarrollo, usar la ruta local
+  return process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite');
+};
+
 // Database configuration options
 export const dbConfig = {
   type: 'sqlite' as const,
-  database: process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite'),
+  database: getDatabasePath(),
   entities: [
     User,
     Company,
@@ -34,7 +45,7 @@ export const dbConfig = {
 // Create and export the DataSource instance
 export const AppDataSource = new DataSource({
   type: 'sqlite',
-  database: process.env.DATABASE_PATH || path.join(__dirname, '../../database.sqlite'),
+  database: getDatabasePath(),
   entities: [
     User,
     Company,

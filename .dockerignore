@@ -1,8 +1,8 @@
 # Ignore dependencies
 node_modules
 
-# Exclude frontend to compile only backend
-frontend
+# Incluir frontend para compilar tanto backend como frontend
+# frontend
 
 # NO ignorar la carpeta dist que contiene los archivos compilados
 # dist

@@ -7,7 +7,7 @@
     "prestart": "npm run build",
     "start": "node dist/index.js",
     "dev": "ts-node-dev --respawn src/index.ts",
-    "seed": "node dist/src/ensure-data.js",
+    "seed": "node dist/ensure-data.js",
     "build": "tsc",
     "test": "jest"
   },

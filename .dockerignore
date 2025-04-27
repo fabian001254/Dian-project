@@ -1,0 +1,11 @@
+# Ignore dependencies
+node_modules
+# Exclude frontend to compile only backend
+frontend
+# Ignore build outputs
+dist
+# Ignore SQLite file
+database.sqlite
+# Logs and env
+*.log
+.env

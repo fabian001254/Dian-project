@@ -37,7 +37,8 @@
     "typeorm": "^0.3.22",
     "uuid": "^9.0.1",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.5.0"
+    "xml2js": "^0.5.0",
+    "archiver": "^7.0.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -50,7 +51,6 @@
     "@types/react-dom": "^18.0.11",
     "@types/uuid": "^9.0.8",
     "@types/xml2js": "^0.4.14",
-    "archiver": "^7.0.1",
     "jest": "^29.5.0",
     "puppeteer": "^24.6.1",
     "ts-jest": "^29.1.0",

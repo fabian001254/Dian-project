@@ -57,6 +57,11 @@ async function buildAndStart() {
       console.log('🔍 Frontend encontrado, compilando...');
       
       try {
+        // Mostrar contenido del directorio frontend para depuración
+        console.log('Contenido del directorio frontend:');
+        const frontendFiles = fs.readdirSync(FRONTEND_DIR);
+        console.log(frontendFiles);
+        
         // 2. Compilar el frontend
         console.log('🔨 Compilando el frontend...');
         execSync('npm run build', { 
@@ -68,6 +73,13 @@ async function buildAndStart() {
         // 3. Verificar si existe el directorio de build
         if (fs.existsSync(FRONTEND_BUILD_DIR)) {
           console.log('📦 Copiando archivos del frontend al directorio public...');
+          console.log(`Directorio build: ${FRONTEND_BUILD_DIR}`);
+          console.log(`Directorio public: ${FRONTEND_PUBLIC_DIR}`);
+          
+          // Mostrar contenido del directorio build para depuración
+          console.log('Contenido del directorio build:');
+          const buildFiles = fs.readdirSync(FRONTEND_BUILD_DIR);
+          console.log(buildFiles);
           
           // Crear el directorio public si no existe
           if (!fs.existsSync(FRONTEND_PUBLIC_DIR)) {
@@ -76,15 +88,150 @@ async function buildAndStart() {
           
           // Copiar archivos del build al directorio public
           copyDir(FRONTEND_BUILD_DIR, FRONTEND_PUBLIC_DIR);
+          
+          // Verificar que los archivos se copiaron correctamente
+          console.log('Contenido del directorio public después de copiar:');
+          const publicFiles = fs.readdirSync(FRONTEND_PUBLIC_DIR);
+          console.log(publicFiles);
+          
           console.log('✅ Archivos del frontend copiados correctamente');
         } else {
           console.log('⚠️ No se encontró el directorio de build del frontend');
+          
+          // Intentar crear el directorio build y copiar directamente desde src
+          console.log('Intentando alternativa: copiar desde src/...');
+          const frontendSrcDir = path.join(FRONTEND_DIR, 'src');
+          
+          if (fs.existsSync(frontendSrcDir)) {
+            // Crear el directorio public si no existe
+            if (!fs.existsSync(FRONTEND_PUBLIC_DIR)) {
+              fs.mkdirSync(FRONTEND_PUBLIC_DIR, { recursive: true });
+            }
+            
+            // Crear un index.html básico si no existe
+            const publicIndexPath = path.join(FRONTEND_PUBLIC_DIR, 'index.html');
+            if (!fs.existsSync(publicIndexPath)) {
+              fs.writeFileSync(publicIndexPath, `
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>DIAN Facturación Electrónica</title>
+                  <style>
+                    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+                    h1 { color: #2c3e50; }
+                    .container { max-width: 800px; margin: 0 auto; }
+                    .message { background: #f8f9fa; padding: 20px; border-radius: 5px; }
+                    .api-link { margin-top: 20px; }
+                    a { color: #3498db; text-decoration: none; }
+                    a:hover { text-decoration: underline; }
+                  </style>
+                </head>
+                <body>
+                  <div class="container">
+                    <h1>Sistema de Facturación Electrónica DIAN</h1>
+                    <div class="message">
+                      <p>El backend está funcionando correctamente.</p>
+                      <p>La interfaz de usuario completa no está disponible en este momento.</p>
+                    </div>
+                    <div class="api-link">
+                      <p>Puedes acceder a la API en: <a href="/api/health">/api/health</a></p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+              `);
+              console.log('✅ Creado index.html básico en el directorio public');
+            }
+          }
         }
       } catch (error) {
         console.error('❌ Error compilando el frontend:', error);
+        
+        // Plan de contingencia: crear un index.html básico
+        console.log('Creando página de contingencia...');
+        if (!fs.existsSync(FRONTEND_PUBLIC_DIR)) {
+          fs.mkdirSync(FRONTEND_PUBLIC_DIR, { recursive: true });
+        }
+        
+        const publicIndexPath = path.join(FRONTEND_PUBLIC_DIR, 'index.html');
+        fs.writeFileSync(publicIndexPath, `
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>DIAN Facturación Electrónica</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+              h1 { color: #2c3e50; }
+              .container { max-width: 800px; margin: 0 auto; }
+              .message { background: #f8f9fa; padding: 20px; border-radius: 5px; }
+              .api-link { margin-top: 20px; }
+              a { color: #3498db; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>Sistema de Facturación Electrónica DIAN</h1>
+              <div class="message">
+                <p>El backend está funcionando correctamente.</p>
+                <p>La interfaz de usuario completa no está disponible en este momento.</p>
+                <p>Error: ${error.message}</p>
+              </div>
+              <div class="api-link">
+                <p>Puedes acceder a la API en: <a href="/api/health">/api/health</a></p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `);
+        console.log('✅ Creado index.html de contingencia en el directorio public');
       }
     } else {
-      console.log('⚠️ No se encontró el directorio frontend, continuando sin compilar');
+      console.log('⚠️ No se encontró el directorio frontend, creando página estática básica...');
+      
+      // Crear el directorio public si no existe
+      if (!fs.existsSync(FRONTEND_PUBLIC_DIR)) {
+        fs.mkdirSync(FRONTEND_PUBLIC_DIR, { recursive: true });
+      }
+      
+      // Crear un index.html básico
+      const publicIndexPath = path.join(FRONTEND_PUBLIC_DIR, 'index.html');
+      fs.writeFileSync(publicIndexPath, `
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>DIAN Facturación Electrónica</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+            h1 { color: #2c3e50; }
+            .container { max-width: 800px; margin: 0 auto; }
+            .message { background: #f8f9fa; padding: 20px; border-radius: 5px; }
+            .api-link { margin-top: 20px; }
+            a { color: #3498db; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <h1>Sistema de Facturación Electrónica DIAN</h1>
+            <div class="message">
+              <p>El backend está funcionando correctamente.</p>
+              <p>La interfaz de usuario completa no está disponible en este momento.</p>
+            </div>
+            <div class="api-link">
+              <p>Puedes acceder a la API en: <a href="/api/health">/api/health</a></p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      console.log('✅ Creado index.html básico en el directorio public');
     }
     
     // 4. Ejecutar el seed de la base de datos

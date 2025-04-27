@@ -10,6 +10,7 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "proxy": "ts-node-dev --respawn src/proxy-server.ts",
     "dev-with-proxy": "concurrently \"npm run dev\" \"npm run proxy\"",
+    "dev-local": "node dev-local.js",
     "seed": "node dist/ensure-data.js",
     "build": "tsc",
     "test": "jest",

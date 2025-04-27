@@ -10,7 +10,7 @@ import * as fs from 'fs';
 
 // Initialize express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT ?? '3000', 10);
 
 // Logging de peticiones HTTP
 app.use(morgan('dev'));
@@ -57,8 +57,9 @@ const startServer = async () => {
     }
 
     // Start server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    // Escuchar en todas las interfaces, importante para entornos Docker/Render
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT} (0.0.0.0)`);
       console.log(`📝 DIAN Facturación Electrónica - Sistema Educativo`);
       console.log(`🌐 Accede a la aplicación en: http://localhost:${PORT}`);
     });

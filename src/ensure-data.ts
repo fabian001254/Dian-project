@@ -240,12 +240,15 @@ const ensureData = async () => {
       const certificateRepository = AppDataSource.getRepository(Certificate);
       const certificate = new Certificate();
       certificate.name = 'Certificado Digital Simulado';
-      certificate.publicKey = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvz4Tz6QJBGQp2lTHGmTT\n3IbPcEBEQcS9AxXFEAEAAhUAg+7cuLIcTwJBAKBzXhpzCgVw2QLgakDghn4ShXRw\nLTdIODQ5NQqclyUwcRJIFPJBIRERERERERERERERERERERERERERERERERERERER\nEREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREQ==\n-----END PUBLIC KEY-----';
+      certificate.publicKey = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvz4Tz6QJBGQp2lTHGmTT\n3IbPcEBEQcS9AxXFEAEAAhUAg+7cuLIcTwJBAKBzXhpzCgVw2QLgakDghn4ShXRw\nLTdIODQ5NQqclyUwcRJIFPJBIRERERERERERERERERERERERERERERERERERERER\nEREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREQ==\n-----END PUBLIC KEY-----';
       certificate.privateKey = '-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC/PhPPpAkEZCna\nVMcaZNPchs9wQERBxL0DFcUQAQACFQCD7ty4shxPAkEAoHNeGnMKBXDZAuBqQOCG\nfhKFdHAtN0g4NDk1CpyXJTBxEkgU8kEhEREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREREQ==\n-----END PRIVATE KEY-----';
       certificate.issueDate = new Date();
       const expiryDate = new Date();
       expiryDate.setFullYear(expiryDate.getFullYear() + 1);
       certificate.expiryDate = expiryDate;
+      // Asegurar validFrom y validTo para evitar NOT NULL
+      certificate.validFrom = certificate.issueDate;
+      certificate.validTo = certificate.expiryDate;
       certificate.serialNumber = '12345678901234567890';
       certificate.issuer = 'Autoridad Certificadora Simulada';
       certificate.status = CertificateStatus.ACTIVE;

@@ -10,7 +10,7 @@ import * as fs from 'fs';
 
 // Initialize express app
 const app = express();
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
+const PORT = process.env.PORT || 3001; // Aseguramos que sea un número más adelante
 
 // Logging de peticiones HTTP
 app.use(morgan('dev'));
@@ -42,27 +42,27 @@ app.get('*', (_req, res) => {
 // Database connection and server start
 const startServer = async () => {
   try {
-    // Check if database exists
-    const dbPath = path.join(__dirname, '../database.sqlite');
-    const dbExists = fs.existsSync(dbPath);
-
     // Connect to database
     await AppDataSource.initialize();
     console.log('📦 Database connected successfully');
 
+    // ***MOVER ESTO AQUÍ: Iniciar el servidor DESPUÉS de conectar a la base de datos***
+    const server = app.listen(Number(PORT), '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`📝 DIAN Facturación Electrónica - Sistema Educativo`);
+      console.log(`🌐 Accede a la aplicación en: http://localhost:${PORT}`);
+      console.log(`📚 Documentación API: http://localhost:${PORT}/api-docs`); // Agregado
+    });
+
     // Seed database if it's a new installation
+    const dbPath = path.join(__dirname, '../database.sqlite');
+    const dbExists = fs.existsSync(dbPath);
     if (!dbExists) {
       console.log('🔍 Nueva instalación detectada. Inicializando base de datos...');
       await seedDatabase();
     }
 
-    // Start server
-    // Escuchar en todas las interfaces, importante para entornos Docker/Render
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT} (0.0.0.0)`);
-      console.log(`📝 DIAN Facturación Electrónica - Sistema Educativo`);
-      console.log(`🌐 Accede a la aplicación en: http://localhost:${PORT}`);
-    });
+
   } catch (error) {
     console.error('❌ Error starting server:', error);
   }

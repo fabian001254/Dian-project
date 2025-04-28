@@ -1,19 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import axios from 'axios';
-
-// Configurar URL base para las peticiones API (apuntar al backend)
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3000';
-
-// Configurar interceptor para añadir el token a todas las solicitudes
-axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, error => {
-  return Promise.reject(error);
-});
+import api from '../services/api.config';
 
 interface User {
   id: string;
@@ -76,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(parsedUser);
         
         // Configurar el header de autorización para las peticiones
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
       } catch (error) {
         // Si hay algún error al parsear el usuario, limpiamos todo
         console.error('Error al restaurar la sesión:', error);
@@ -93,7 +79,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password });
       
       if (response.data.success) {
         const { token, user } = response.data.data;
@@ -107,7 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(user));
         
         // Set default Authorization header for all requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } else {
         throw new Error(response.data.message || 'Error al iniciar sesión');
       }
@@ -125,7 +111,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsLoading(true);
       setError(null);
       
-      const response = await axios.post('/api/auth/register', userData);
+      const response = await api.post('/register', userData);
       
       if (response.data.success) {
         const { token, user } = response.data.data;
@@ -139,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('user', JSON.stringify(user));
         
         // Set default Authorization header for all requests
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } else {
         throw new Error(response.data.message || 'Error al registrarse');
       }
@@ -162,7 +148,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     localStorage.removeItem('user');
     
     // Clear Authorization header
-    delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
   };
 
   const clearError = () => {

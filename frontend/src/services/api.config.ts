@@ -34,8 +34,6 @@ api.interceptors.request.use(
 // Interceptor para manejar errores de respuesta
 api.interceptors.response.use(
   (response) => {
-    // Forward only server data
-    response.data = response.data.data || response.data;
     console.log(`API Response: ${response.status} ${response.config.url}`, response.data);
     return response;
   },

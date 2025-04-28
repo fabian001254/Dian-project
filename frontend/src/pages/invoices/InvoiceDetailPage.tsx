@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '../../components/ui/Button';
 import { FaDownload, FaEnvelope, FaFilePdf, FaFileCode, FaPrint } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../../services/api.config';
 import Swal from 'sweetalert2';
 
 // Interfaces

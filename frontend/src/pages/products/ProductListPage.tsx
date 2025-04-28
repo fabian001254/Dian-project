@@ -1,7 +1,7 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import api from '../../services/api.config';
 import { FaPlus, FaTrash, FaEdit, FaSearch, FaChevronDown, FaChevronUp, FaChevronRight, FaFilter } from 'react-icons/fa';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';

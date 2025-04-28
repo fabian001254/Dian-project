@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Button } from '../../components/ui/Button';
 import { FaPlus, FaSearch, FaFileDownload, FaCheck, FaTimes, FaKey, FaEye, FaTrash } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../../services/api.config';
 import { useAuth } from '../../context/AuthContext';
 import SectionLoader from '../../components/ui/SectionLoader';
 import Swal from 'sweetalert2';

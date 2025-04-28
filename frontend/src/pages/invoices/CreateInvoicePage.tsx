@@ -2,7 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { FaPlus, FaTrash, FaInfoCircle, FaSearch, FaEdit, FaLock } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../../services/api.config';
 import { v4 as uuidv4 } from 'uuid';
 import Card from '../../components/ui/Card';
 import Input from '../../components/ui/Input';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import api from '../../services/api.config';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import SectionLoader from '../../components/ui/SectionLoader';

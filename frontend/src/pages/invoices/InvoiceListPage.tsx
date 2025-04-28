@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../services/api.config';
 import Swal from 'sweetalert2';
 import styled from 'styled-components';
 import { FaPlus, FaSearch, FaFilter, FaFileDownload, FaEye, FaChevronRight, FaChevronDown, FaPaperPlane } from 'react-icons/fa';

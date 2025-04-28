@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FaPlus, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
-import axios from 'axios';
+import api from '../../services/api.config';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';

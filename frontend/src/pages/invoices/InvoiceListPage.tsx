@@ -295,7 +295,7 @@ const InvoiceListPage: React.FC = () => {
           : user?.role === 'vendor'
             ? `/api/invoices/vendor/${user.id}`
             : '/api/invoices';
-        const response = await axios.get(url);
+        const response = await api.get(url);
         // Usar el array de facturas dentro del objeto data
         const invoicesData = response.data.data;
         
@@ -373,7 +373,7 @@ const InvoiceListPage: React.FC = () => {
   const handleDownloadInvoice = async (id: string, format: 'pdf' | 'xml') => {
     try {
       // In a real app, this would be an actual API call
-      const response = await axios.get(`/api/invoices/${id}/download/${format}`, {
+      const response = await api.get(`/api/invoices/${id}/download/${format}`, {
         responseType: 'blob'
       });
       
@@ -397,7 +397,7 @@ const InvoiceListPage: React.FC = () => {
   const handleSendInvoice = async (id: string) => {
     try {
       // In a real app, this would be an actual API call
-      const response = await axios.post(`/api/invoices/${id}/send`);
+      const response = await api.post(`/api/invoices/${id}/send`);
       
       if (response.data.success) {
         Swal.fire({ icon: 'success', title: 'Factura enviada exitosamente' });

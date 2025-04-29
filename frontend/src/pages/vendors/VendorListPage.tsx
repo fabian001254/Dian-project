@@ -198,7 +198,7 @@ const VendorListPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('¿Desea eliminar este vendedor?')) return;
     try {
-      await axios.delete(`/api/vendors/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
+      await api.delete(`/api/vendors/${id}`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } });
       setVendors(vendors.filter(v => v.id !== id));
       Swal.fire('Eliminado', 'Vendedor eliminado correctamente', 'success');
     } catch (err: any) {
@@ -217,7 +217,7 @@ const VendorListPage: React.FC = () => {
     setLoadingInvoices(prev => ({ ...prev, [vendorId]: true }));
     try {
       // Usar endpoint dedicado para facturas de vendedor
-      const res = await axios.get(`/api/invoices/vendor/${vendorId}`);
+      const res = await api.get(`/api/invoices/vendor/${vendorId}`);
       const invoices = res.data.success ? res.data.data : [];
       setVendorInvoices(prev => ({ ...prev, [vendorId]: invoices }));
     } catch {
@@ -227,7 +227,7 @@ const VendorListPage: React.FC = () => {
   };
 
   useEffect(() => {
-    axios.get('/api/vendors')
+    api.get('/api/vendors')
       .then(res => setVendors(res.data.data || []))
       .catch(() => setVendors([]))
       .finally(() => setLoading(false));

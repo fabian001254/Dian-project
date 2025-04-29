@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { FaTimes, FaUserPlus } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
-import axios from 'axios';
+import api from '../services/api.config';
 
 interface CreateCustomerModalProps {
   isOpen: boolean;
@@ -60,7 +60,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setLoading(true);
     try {
-      const resp = await axios.post('/api/customers', { name, email, phone, address });
+      const resp = await api.post('/api/customers', { name, email, phone, address });
       const customer = resp.data.data || resp.data;
       onCreate({ id: customer.id, name: customer.name });
       // reset fields

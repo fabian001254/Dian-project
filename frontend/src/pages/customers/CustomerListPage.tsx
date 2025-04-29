@@ -294,7 +294,7 @@ const CustomerListPage: React.FC = () => {
         if (!user?.company?.id) return;
         
         // Obtener la lista de vendedores
-        const vendorsResponse = await axios.get('/api/vendors', {
+        const vendorsResponse = await api.get('/api/vendors', {
           params: { companyId: user.company.id }
         });
         
@@ -308,7 +308,7 @@ const CustomerListPage: React.FC = () => {
           
           if (userIds.length > 0) {
             // Obtener datos de usuarios en una sola llamada
-            const usersResponse = await axios.get('/api/users/batch', {
+            const usersResponse = await api.get('/api/users/batch', {
               params: { ids: userIds.join(',') }
             });
             
@@ -329,7 +329,7 @@ const CustomerListPage: React.FC = () => {
     const fetchCustomers = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/customers?companyId=${user?.companyId}`);
+        const response = await api.get(`/api/customers?companyId=${user?.companyId}`);
         
         if (response.data.success) {
           setCustomers(response.data.data);
@@ -350,7 +350,7 @@ const CustomerListPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este cliente?')) {
       try {
-        const response = await axios.delete(`/api/customers/${id}`);
+        const response = await api.delete(`/api/customers/${id}`);
         
         if (response.data.success) {
           setCustomers(customers.filter(customer => customer.id !== id));
@@ -384,7 +384,7 @@ const CustomerListPage: React.FC = () => {
     
     try {
       // Obtener facturas del cliente desde la API
-      const response = await axios.get(`/api/invoices/customer/${customerId}`);
+      const response = await api.get(`/api/invoices/customer/${customerId}`);
       const fetched = response.data?.data;
       if (Array.isArray(fetched)) {
         setCustomerInvoices(prev => ({

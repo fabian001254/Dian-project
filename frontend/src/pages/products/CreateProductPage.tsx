@@ -63,7 +63,7 @@ const CreateProductPage: React.FC = () => {
       setIsLoading(true);
       try {
         // Cargar tasas de impuestos
-        const taxRatesResponse = await axios.get('/api/tax-rates');
+        const taxRatesResponse = await api.get('/api/tax-rates');
         if (taxRatesResponse.data.success) {
           setTaxRates(taxRatesResponse.data.data);
           // Establecer la primera tasa de impuesto como valor predeterminado si hay alguna
@@ -78,7 +78,7 @@ const CreateProductPage: React.FC = () => {
         // Cargar vendedores reales solo si el usuario no es un vendedor
         if (!isVendor) {
           setLoadingVendors(true);
-          const vendorsResp = await axios.get('/api/vendors');
+          const vendorsResp = await api.get('/api/vendors');
           if (vendorsResp.data && vendorsResp.data.success) {
             // Mapear solo id y name
             const list = (vendorsResp.data.data as any[]).map(v => ({ id: v.id, name: v.name }));
@@ -223,7 +223,7 @@ const CreateProductPage: React.FC = () => {
       console.log('Headers:', { Authorization: `Bearer ${token}` });
       
       // Realizar la petición al backend
-      const response = await axios.post('/api/products', productData, {
+      const response = await api.post('/api/products', productData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

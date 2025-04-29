@@ -4,7 +4,7 @@ import { FaSearch, FaTimes, FaPlus, FaCheck } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import SectionLoader from '../ui/SectionLoader';
-import axios from 'axios';
+import api from '../services/api.config';
 
 interface Product {
   id: string;
@@ -202,7 +202,7 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
         : 'http://localhost:3001/api/products';
       
       console.log(`Consultando productos ${customerId ? 'para el cliente ' + customerId : 'generales'}`);
-      const productsResponse = await axios.get(url);
+      const productsResponse = await api.get(url);
       
       if (productsResponse.data && productsResponse.data.success) {
         console.log('Productos cargados:', productsResponse.data.data.length);
@@ -252,7 +252,7 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
           const searchUrl = `${baseUrl}/search?${queryParams.join('&')}`;
           console.log(`Buscando productos con: ${searchUrl}`);
           
-          const searchResponse = await axios.get(searchUrl);
+          const searchResponse = await api.get(searchUrl);
           
           if (searchResponse.data && searchResponse.data.success) {
             let results = searchResponse.data.data;
@@ -277,7 +277,7 @@ const ProductSelectorModal: React.FC<ProductSelectorModalProps> = ({
           const productsUrl = queryParams.length > 0 ? `${baseUrl}?${queryParams.join('&')}` : baseUrl;
           console.log(`Cargando productos con: ${productsUrl}`);
           
-          const productsResponse = await axios.get(productsUrl);
+          const productsResponse = await api.get(productsUrl);
           
           if (productsResponse.data && productsResponse.data.success) {
             let results = productsResponse.data.data;

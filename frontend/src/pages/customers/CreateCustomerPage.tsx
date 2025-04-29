@@ -124,7 +124,7 @@ const CreateCustomerPage: React.FC = () => {
       // Asegurarse de que el token de autenticación esté presente
       const token = localStorage.getItem('token');
       
-      const response = await axios.post('/api/customers', customerData, {
+      const response = await api.post('/api/customers', customerData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

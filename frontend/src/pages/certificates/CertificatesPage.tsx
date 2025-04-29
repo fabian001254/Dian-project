@@ -231,7 +231,7 @@ const CertificatesPage: React.FC = () => {
       try {
         setLoading(true);
         // En un entorno real, aquí se haría la llamada a la API
-        // const response = await axios.get(`/api/certificates?companyId=${user?.companyId}`);
+        // const response = await api.get(`/api/certificates?companyId=${user?.companyId}`);
         
         // Simulamos la respuesta con datos de ejemplo
         setTimeout(() => {
@@ -263,7 +263,7 @@ const CertificatesPage: React.FC = () => {
     if (result.isConfirmed) {
       try {
         // En un entorno real, aquí se haría la llamada a la API
-        // await axios.delete(`/api/certificates/${id}`);
+        // await api.delete(`/api/certificates/${id}`);
         
         // Simulamos la eliminación
         setCertificates(certificates.filter(cert => cert.id !== id));

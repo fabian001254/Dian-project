@@ -72,7 +72,7 @@ const InvoiceDetailPage: React.FC = () => {
     const fetchInvoice = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`/api/invoices/${id}`);
+        const response = await api.get(`/api/invoices/${id}`);
         setInvoice(response.data.data);
       } catch (err: any) {
         setError(err.message || 'Error al cargar la factura');
@@ -115,7 +115,7 @@ const InvoiceDetailPage: React.FC = () => {
   const handlePrint = () => window.print();
   const handleDownload = async (format: 'pdf' | 'xml' | 'email') => {
     try {
-      const response = await axios.get(`/api/invoices/${invoice?.id}/download/${format}`, { responseType: 'blob' });
+      const response = await api.get(`/api/invoices/${invoice?.id}/download/${format}`, { responseType: 'blob' });
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');

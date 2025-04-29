@@ -4,7 +4,7 @@ import { FaTimes } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
-import axios from 'axios';
+import api from '../services/api.config';
 import VendorSelectorModal from './VendorSelectorModal';
 
 interface CreateProductModalProps {
@@ -159,7 +159,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const loadVendors = async () => {
     try {
       setLoadingVendors(true);
-      const response = await axios.get('/api/vendors');
+      const response = await api.get('/api/vendors');
       if (response.data && response.data.success) {
         setVendors(response.data.data);
       }

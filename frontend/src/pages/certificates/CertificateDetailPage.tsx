@@ -385,7 +385,7 @@ SERIAL: 123456789ABCDEF
       try {
         setLoading(true);
         // En un entorno real, aquí se haría la llamada a la API
-        // const response = await axios.get(`/api/certificates/${id}`);
+        // const response = await api.get(`/api/certificates/${id}`);
         
         // Simulamos la respuesta con datos de ejemplo
         setTimeout(() => {

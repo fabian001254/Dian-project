@@ -55,7 +55,7 @@ const VendorDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get(`/api/vendors/${id}`)
+    api.get(`/api/vendors/${id}`)
       .then(res => setVendor(res.data.data))
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -572,7 +572,7 @@ const ProductListPage: React.FC = () => {
       try {
         if (!user?.company?.id) return;
         
-        const response = await axios.get('/api/customers', {
+        const response = await api.get('/api/customers', {
           params: { companyId: user.company.id }
         });
         
@@ -595,7 +595,7 @@ const ProductListPage: React.FC = () => {
       try {
         setLoadingVendors(true);
         if (!user?.company?.id) return;
-        const response = await axios.get('/api/vendors', {
+        const response = await api.get('/api/vendors', {
           params: { companyId: user.company.id }
         });
         if (response.data.success) {
@@ -610,7 +610,7 @@ const ProductListPage: React.FC = () => {
               
               // Obtener información adicional del usuario para incluir el apellido
               try {
-                const userResponse = await axios.get(`/api/users/${currentVendor.userId}`);
+                const userResponse = await api.get(`/api/users/${currentVendor.userId}`);
                 if (userResponse.data.success && userResponse.data.data) {
                   const userData = userResponse.data.data;
                   const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
@@ -628,7 +628,7 @@ const ProductListPage: React.FC = () => {
               console.log('No se encontró el vendedor para el usuario actual');
               // Intentar obtener el nombre directamente del usuario si está disponible
               try {
-                const userResponse = await axios.get(`/api/users/${user.id}`);
+                const userResponse = await api.get(`/api/users/${user.id}`);
                 if (userResponse.data.success && userResponse.data.data) {
                   const userData = userResponse.data.data;
                   const fullName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim();
@@ -679,7 +679,7 @@ const ProductListPage: React.FC = () => {
         console.log('Parámetros de consulta para productos:', queryParams);
         
         // Obtener los productos de la empresa del usuario autenticado
-        const response = await axios.get('/api/products', {
+        const response = await api.get('/api/products', {
           params: queryParams
         });
         
@@ -752,7 +752,7 @@ const ProductListPage: React.FC = () => {
     
     if (result.isConfirmed) {
       try {
-        const response = await axios.delete(`/api/products/${id}`);
+        const response = await api.delete(`/api/products/${id}`);
         
         if (response.data.success) {
           setProducts(products.filter(product => product.id !== id));

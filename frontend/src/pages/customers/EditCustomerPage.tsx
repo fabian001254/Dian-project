@@ -50,7 +50,7 @@ const EditCustomerPage: React.FC = () => {
     const fetchCustomer = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(`/api/customers/${id}`);
+        const response = await api.get(`/api/customers/${id}`);
         if (response.data.success) {
           const customer = response.data.data;
           setFormData({
@@ -141,7 +141,7 @@ const EditCustomerPage: React.FC = () => {
       
       console.log('Enviando datos actualizados:', customerData);
       
-      const response = await axios.put(`/api/customers/${id}`, customerData);
+      const response = await api.put(`/api/customers/${id}`, customerData);
       
       if (response.data.success) {
         Swal.fire({

@@ -335,7 +335,7 @@ const UserManagementPage: React.FC = () => {
           return;
         }
         
-        const response = await axios.get('/api/users', {
+        const response = await api.get('/users', {
           params: { companyId: user.company.id }
         });
         
@@ -381,7 +381,7 @@ const UserManagementPage: React.FC = () => {
         companyId: user.company.id
       };
       
-      const response = await axios.post('/api/auth/admin/register', userData);
+      const response = await api.post('/auth/admin/register', userData);
       
       if (response.data.success) {
         Swal.fire({
@@ -430,7 +430,7 @@ const UserManagementPage: React.FC = () => {
       });
       
       if (result.isConfirmed) {
-        const response = await axios.delete(`/api/users/${id}`);
+        const response = await api.delete(`/users/${id}`);
         
         if (response.data.success) {
           Swal.fire({

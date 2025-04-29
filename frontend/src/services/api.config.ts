@@ -1,4 +1,4 @@
-import axios from 'axios';
+import api from './api.config';
 
 // Crear una instancia de axios con la configuración base
 // Usamos una URL absoluta para asegurarnos de que las solicitudes vayan al servidor backend

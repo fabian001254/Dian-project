@@ -55,13 +55,13 @@ const EditProductPage: React.FC = () => {
       setIsLoading(true);
       try {
         // Cargar tasas de impuestos
-        const taxRatesResponse = await axios.get('/api/tax-rates');
+        const taxRatesResponse = await api.get('/api/tax-rates');
         if (taxRatesResponse.data.success) {
           setTaxRates(taxRatesResponse.data.data);
         }
 
         // Cargar datos del producto
-        const productResponse = await axios.get(`/api/products/${id}`);
+        const productResponse = await api.get(`/api/products/${id}`);
         if (productResponse.data.success) {
           const product = productResponse.data.data;
           console.log('Producto cargado:', product);
@@ -145,7 +145,7 @@ const EditProductPage: React.FC = () => {
         price: parseFloat(formData.price)
       };
       
-      const response = await axios.put(`/api/products/${id}`, productData);
+      const response = await api.put(`/api/products/${id}`, productData);
       
       if (response.data.success) {
         alert('Producto actualizado exitosamente');

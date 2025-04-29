@@ -333,7 +333,7 @@ const CreateInvoicePage: React.FC = () => {
 
           // Cargar clientes - solo usar los reales de la base de datos
           try {
-            const customersResponse = await axios.get('/api/customers');
+            const customersResponse = await api.get('/api/customers');
             if (customersResponse.data && Array.isArray(customersResponse.data)) {
               setCustomers(customersResponse.data);
               console.log('Clientes cargados correctamente:', customersResponse.data.length);
@@ -383,7 +383,7 @@ const CreateInvoicePage: React.FC = () => {
 
       // Intentar cargar los productos reales desde la API
       try {
-        const productsResponse = await axios.get('http://localhost:3001/api/products');
+        const productsResponse = await api.get('http://localhost:3001/api/products');
         if (productsResponse.data && productsResponse.data.success && Array.isArray(productsResponse.data.data)) {
           // Usar los productos reales de la API
           setProducts(productsResponse.data.data);
@@ -498,7 +498,7 @@ const CreateInvoicePage: React.FC = () => {
 
       // Intentar cargar el producto directamente desde la API
       try {
-        const response = await axios.get(`/api/products/${productId}`);
+        const response = await api.get(`/api/products/${productId}`);
         if (response.data && response.data.success) {
           console.log('Producto cargado directamente de la API:', response.data.data);
           // Verificar que no se haya agregado mientras se cargaba
@@ -535,7 +535,7 @@ const CreateInvoicePage: React.FC = () => {
     if (selectedProduct.taxRateId) {
       // Fetch robusto de tasa de impuesto vía API
       try {
-        const resp = await axios.get(`/api/tax-rates/${selectedProduct.taxRateId}`);
+        const resp = await api.get(`/api/tax-rates/${selectedProduct.taxRateId}`);
         console.log('API taxRate fetch resp:', resp.data);
         // Determinar objeto con rate
         let rateObj: any;
@@ -638,7 +638,7 @@ const CreateInvoicePage: React.FC = () => {
       }
 
       // Enviar a backend
-      await axios.post('/api/invoices', {
+      await api.post('/api/invoices', {
         invoiceData: { ...invoiceData, status: asDraft ? 'draft' : 'final' },
         items: invoiceData.items
       });
@@ -1021,7 +1021,7 @@ const CreateInvoicePage: React.FC = () => {
               taxRateId: productData.taxRate,
               vendorId: productData.vendorId,
             };
-            const response = await axios.post('/api/products', payload);
+            const response = await api.post('/api/products', payload);
             const created: Product = response.data.data || response.data;
             // Actualizar lista y agregar al invoice
             setProducts(prev => [...prev, created]);
@@ -1055,7 +1055,7 @@ const CreateInvoicePage: React.FC = () => {
           onSelectVendor={async (id) => {
             setInvoiceData(prev => ({ ...prev, vendorId: id }));
             try {
-              const resp = await axios.get(`/api/users/${id}`);
+              const resp = await api.get(`/api/users/${id}`);
               const u = resp.data.data || resp.data;
               setVendorName(`${u.firstName} ${u.lastName}`);
             } catch {

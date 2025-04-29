@@ -4,7 +4,7 @@ import { FaSearch, FaTimes, FaUser } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import SectionLoader from '../ui/SectionLoader';
-import axios from 'axios';
+import api from '../services/api.config';
 import { useNavigate } from 'react-router-dom';
 
 interface Customer {
@@ -208,7 +208,7 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
       
       console.log(`Cargando clientes desde: ${url}`);
       
-      const response = await axios.get(url);
+      const response = await api.get(url);
       let loadedCustomers = [];
       
       if (response.data && Array.isArray(response.data)) {

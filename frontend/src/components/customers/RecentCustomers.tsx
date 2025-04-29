@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import axios from 'axios';
+import api from '../services/api.config';
 import { useAuth } from '../../context/AuthContext';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -45,7 +45,7 @@ const RecentCustomers: React.FC<RecentCustomersProps> = ({ limit = 5 }) => {
     const fetchRecentCustomers = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`/api/customers?companyId=${user?.companyId}`);
+        const response = await api.get(`/api/customers?companyId=${user?.companyId}`);
         if (response.data.success) {
           const sorted = response.data.data
             .sort((a: Customer, b: Customer) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

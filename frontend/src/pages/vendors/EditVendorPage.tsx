@@ -69,7 +69,7 @@ const EditVendorPage: React.FC = () => {
   const [userId, setUserId] = useState<string>('');
 
   useEffect(() => {
-    axios.get(`/api/vendors/${id}`)
+    api.get(`/api/vendors/${id}`)
       .then(res => {
         const data = res.data.data;
         console.log('Datos del vendedor:', data);
@@ -135,7 +135,7 @@ const EditVendorPage: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await axios.put(`/api/vendors/${id}`, form);
+      await api.put(`/api/vendors/${id}`, form);
       Swal.fire('Éxito', 'Vendedor actualizado', 'success');
       navigate(`/vendors/${id}`);
     } catch (err) {
@@ -166,7 +166,7 @@ const EditVendorPage: React.FC = () => {
     console.log('Intentando cambiar contraseña para el usuario con ID:', targetUserId);
     
     try {
-      const response = await axios.post(`/api/users/${targetUserId}/reset-password`, {
+      const response = await api.post(`/api/users/${targetUserId}/reset-password`, {
         newPassword: passwordForm.newPassword
       });
       

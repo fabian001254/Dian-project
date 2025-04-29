@@ -4,7 +4,7 @@ import { FaSearch, FaTimes, FaUserTie } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import SectionLoader from '../ui/SectionLoader';
-import axios from 'axios';
+import api from '../services/api.config';
 import { useNavigate } from 'react-router-dom';
 
 interface Vendor {
@@ -146,7 +146,7 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
   const loadVendors = async () => {
     setLoading(true);
     try {
-      const resp = await axios.get('/api/vendors');
+      const resp = await api.get('/api/vendors');
       const list = (resp.data.data || []) as Vendor[];
       setVendors(list);
       setFiltered(list);

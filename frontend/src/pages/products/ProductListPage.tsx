@@ -572,7 +572,7 @@ const ProductListPage: React.FC = () => {
       try {
         if (!user?.company?.id) return;
         
-        const response = await api.get('/api/customers', {
+        const response = await api.get('/customers', {
           params: { companyId: user.company.id }
         });
         
@@ -595,7 +595,7 @@ const ProductListPage: React.FC = () => {
       try {
         setLoadingVendors(true);
         if (!user?.company?.id) return;
-        const response = await api.get('/api/vendors', {
+        const response = await api.get('/vendors', {
           params: { companyId: user.company.id }
         });
         if (response.data.success) {
@@ -679,7 +679,7 @@ const ProductListPage: React.FC = () => {
         console.log('Parámetros de consulta para productos:', queryParams);
         
         // Obtener los productos de la empresa del usuario autenticado
-        const response = await api.get('/api/products', {
+        const response = await api.get('/products', {
           params: queryParams
         });
         

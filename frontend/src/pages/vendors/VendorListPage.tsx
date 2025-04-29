@@ -227,7 +227,7 @@ const VendorListPage: React.FC = () => {
   };
 
   useEffect(() => {
-    api.get('/api/vendors')
+    api.get('/vendors')
       .then(res => setVendors(res.data.data || []))
       .catch(() => setVendors([]))
       .finally(() => setLoading(false));

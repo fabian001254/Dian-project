@@ -32,7 +32,7 @@ export const getAllProducts = async (
     if (customerId && customerId !== 'todos' && customerId !== 'general') {
       params.customerId = customerId;
     }
-    const response = await api.get('/api/products', { params });
+    const response = await api.get('/products', { params });
     const products = response.data.data as Product[];
     return products.map((product) => {
       if (product.taxRates && product.taxRates.length > 0) {
@@ -53,7 +53,7 @@ export const getAllProducts = async (
  */
 export const getCustomers = async (): Promise<Customer[]> => {
   try {
-    const response = await api.get('/api/customers');
+    const response = await api.get('/customers');
     return response.data.data as Customer[];
   } catch (error) {
     console.error('Error fetching customers:', error);

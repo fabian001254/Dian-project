@@ -60,7 +60,7 @@ const CreateCustomerModal: React.FC<CreateCustomerModalProps> = ({ isOpen, onClo
     e.preventDefault();
     setLoading(true);
     try {
-      const resp = await api.post('/api/customers', { name, email, phone, address });
+      const resp = await api.post('/customers', { name, email, phone, address });
       const customer = resp.data.data || resp.data;
       onCreate({ id: customer.id, name: customer.name });
       // reset fields

@@ -55,7 +55,7 @@ const EditProductPage: React.FC = () => {
       setIsLoading(true);
       try {
         // Cargar tasas de impuestos
-        const taxRatesResponse = await api.get('/api/tax-rates');
+        const taxRatesResponse = await api.get('/tax-rates');
         if (taxRatesResponse.data.success) {
           setTaxRates(taxRatesResponse.data.data);
         }

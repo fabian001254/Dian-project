@@ -120,7 +120,7 @@ const CreateVendorPage: React.FC = () => {
     }
     try {
       const payload = { ...formData, companyId: user.company.id };
-      await api.post('/api/vendors', payload, {
+      await api.post('/vendors', payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       Swal.fire('Éxito', 'Vendedor creado', 'success');

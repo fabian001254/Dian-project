@@ -333,7 +333,7 @@ const CreateInvoicePage: React.FC = () => {
 
           // Cargar clientes - solo usar los reales de la base de datos
           try {
-            const customersResponse = await api.get('/api/customers');
+            const customersResponse = await api.get('/customers');
             if (customersResponse.data && Array.isArray(customersResponse.data)) {
               setCustomers(customersResponse.data);
               console.log('Clientes cargados correctamente:', customersResponse.data.length);
@@ -638,7 +638,7 @@ const CreateInvoicePage: React.FC = () => {
       }
 
       // Enviar a backend
-      await api.post('/api/invoices', {
+      await api.post('/invoices', {
         invoiceData: { ...invoiceData, status: asDraft ? 'draft' : 'final' },
         items: invoiceData.items
       });
@@ -1021,7 +1021,7 @@ const CreateInvoicePage: React.FC = () => {
               taxRateId: productData.taxRate,
               vendorId: productData.vendorId,
             };
-            const response = await api.post('/api/products', payload);
+            const response = await api.post('/products', payload);
             const created: Product = response.data.data || response.data;
             // Actualizar lista y agregar al invoice
             setProducts(prev => [...prev, created]);

@@ -159,7 +159,7 @@ const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const loadVendors = async () => {
     try {
       setLoadingVendors(true);
-      const response = await api.get('/api/vendors');
+      const response = await api.get('/vendors');
       if (response.data && response.data.success) {
         setVendors(response.data.data);
       }

@@ -95,6 +95,8 @@ const MenuLink = styled(NavLinkWrapper)<{ isOpen: boolean }>`
   svg {
     font-size: 18px;
     width: 24px;
+    min-width: 24px;
+    margin: ${props => props.isOpen ? '0' : '0 auto'};
   }
 `;
 
@@ -103,6 +105,8 @@ const MenuText = styled.span<{ isOpen: boolean }>`
   white-space: nowrap;
   opacity: ${props => props.isOpen ? 1 : 0};
   transition: opacity var(--transition-fast);
+  width: ${props => props.isOpen ? 'auto' : '0'};
+  overflow: hidden;
 `;
 
 const SectionTitle = styled.div<{ isOpen: boolean }>`

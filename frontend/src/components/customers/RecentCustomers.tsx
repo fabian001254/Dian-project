@@ -45,7 +45,7 @@ const RecentCustomers: React.FC<RecentCustomersProps> = ({ limit = 5 }) => {
     const fetchRecentCustomers = async () => {
       setLoading(true);
       try {
-        const response = await api.get(`/api/customers?companyId=${user?.companyId}`);
+        const response = await api.get(`/customers?companyId=${user?.companyId}`);
         if (response.data.success) {
           const sorted = response.data.data
             .sort((a: Customer, b: Customer) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

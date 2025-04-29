@@ -294,7 +294,7 @@ const CustomerListPage: React.FC = () => {
         if (!user?.company?.id) return;
         
         // Obtener la lista de vendedores
-        const vendorsResponse = await api.get('/api/vendors', {
+        const vendorsResponse = await api.get('/vendors', {
           params: { companyId: user.company.id }
         });
         
@@ -308,7 +308,7 @@ const CustomerListPage: React.FC = () => {
           
           if (userIds.length > 0) {
             // Obtener datos de usuarios en una sola llamada
-            const usersResponse = await api.get('/api/users/batch', {
+            const usersResponse = await api.get('/users/batch', {
               params: { ids: userIds.join(',') }
             });
             

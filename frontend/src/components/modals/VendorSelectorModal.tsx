@@ -146,7 +146,7 @@ const VendorSelectorModal: React.FC<VendorSelectorModalProps> = ({
   const loadVendors = async () => {
     setLoading(true);
     try {
-      const resp = await api.get('/api/vendors');
+      const resp = await api.get('/vendors');
       const list = (resp.data.data || []) as Vendor[];
       setVendors(list);
       setFiltered(list);

@@ -203,8 +203,8 @@ const CustomerSelectorModal: React.FC<CustomerSelectorModalProps> = ({
     try {
       // Si hay un vendorId, usamos un endpoint específico para obtener solo los clientes de ese vendedor
       const url = vendorId 
-        ? `/api/customers?vendorId=${vendorId}` 
-        : '/api/customers';
+        ? `/customers?vendorId=${vendorId}` 
+        : '/customers';
       
       console.log(`Cargando clientes desde: ${url}`);
       

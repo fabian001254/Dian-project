@@ -329,7 +329,7 @@ const CustomerListPage: React.FC = () => {
     const fetchCustomers = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/api/customers?companyId=${user?.companyId}`);
+        const response = await api.get(`/customers?companyId=${user?.companyId}`);
         
         if (response.data.success) {
           setCustomers(response.data.data);

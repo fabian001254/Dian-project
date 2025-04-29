@@ -4,7 +4,7 @@ import axios from 'axios';
 // Usamos una URL absoluta para asegurarnos de que las solicitudes vayan al servidor backend
 // independientemente de dónde se esté ejecutando el frontend
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || '',  // Quitamos el '/api' predeterminado para evitar duplicación
+  baseURL: (process.env.REACT_APP_API_BASE_URL || '') + '/api',  // Añadimos '/api' como prefijo para todas las peticiones
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

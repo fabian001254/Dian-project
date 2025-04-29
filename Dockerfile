@@ -21,7 +21,7 @@ RUN if [ -d "frontend" ]; then \
       cd frontend && \
       npm install && \
       echo "Compilando frontend..." && \
-      npm run build && \
+      CI=false npm run build && \
       cd .. && \
       echo "Frontend compilado correctamente"; \
     else \

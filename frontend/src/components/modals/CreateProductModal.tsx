@@ -4,7 +4,7 @@ import { FaTimes } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Select from '../ui/Select';
-import api from '../services/api.config';
+import api from '../../services/api.config';
 import VendorSelectorModal from './VendorSelectorModal';
 
 interface CreateProductModalProps {

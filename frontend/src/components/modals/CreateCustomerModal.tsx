@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { FaTimes, FaUserPlus } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
-import api from '../services/api.config';
+import api from '../../services/api.config';
 
 interface CreateCustomerModalProps {
   isOpen: boolean;

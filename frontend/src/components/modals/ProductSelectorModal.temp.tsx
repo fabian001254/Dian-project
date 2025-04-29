@@ -4,7 +4,7 @@ import { FaSearch, FaTimes, FaPlus, FaCheck } from 'react-icons/fa';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import SectionLoader from '../ui/SectionLoader';
-import api from '../services/api.config';
+import api from '../../services/api.config';
 
 interface Product {
   id: string;

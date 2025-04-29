@@ -291,10 +291,10 @@ const InvoiceListPage: React.FC = () => {
       try {
         // Obtener las facturas del servidor (podemos filtrar por cliente)
         const url = customerIdParam
-          ? `/api/invoices/customer/${customerIdParam}`
+          ? `/invoices/customer/${customerIdParam}`
           : user?.role === 'vendor'
-            ? `/api/invoices/vendor/${user.id}`
-            : '/api/invoices';
+            ? `/invoices/vendor/${user.id}`
+            : '/invoices';
         const response = await api.get(url);
         // Usar el array de facturas dentro del objeto data
         const invoicesData = response.data.data;

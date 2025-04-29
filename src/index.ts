@@ -7,6 +7,7 @@ import { AppDataSource } from './config/database';
 import apiRoutes from './api/routes';
 import { seedDatabase } from './config/seed';
 import * as fs from 'fs';
+import { generateApiDocsHtml, generateApiStatusHtml } from './api-docs';
 
 // Initialize express app
 const app = express();
@@ -134,6 +135,16 @@ app.get('/api/health', (_req, res) => {
     message: 'Servidor disponible', 
     time: new Date().toISOString() 
   });
+});
+
+// Ruta para la documentación de la API
+app.get('/api-docs', (_req, res) => {
+  res.send(generateApiDocsHtml());
+});
+
+// Ruta para el estado del servidor
+app.get('/api-status', (_req, res) => {
+  res.send(generateApiStatusHtml());
 });
 
 // API routes
